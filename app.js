@@ -1,0 +1,35 @@
+const express = require("express");
+const path = require("path");
+const app = express();
+const cors = require('cors');
+const cookieParser = require('cookie-parser');
+const dotenv = require('dotenv');
+app.use(cors());
+app.use(cookieParser());
+ 
+// .evn congif
+dotenv.config();
+
+// Express Configuration
+const port = process.env.PORT ||  7700;
+app.use(express.urlencoded({ extended: false }));
+app.use(express.json());
+
+// importing modals
+
+
+// importing Routes
+const mongoose = require("mongoose");
+const stablishConnection = require("./db/connection");
+const authRoutes = require("./routes/authRoutes");
+
+// importing Middlewares
+app.use('/api/auth',authRoutes);
+
+// Establishing the mongoose connection
+stablishConnection();
+
+
+app.listen(port,()=>{
+    console.log("Server is up and running on the port", port);
+});
