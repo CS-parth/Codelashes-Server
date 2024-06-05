@@ -22,10 +22,10 @@ app.use(express.json());
 const mongoose = require("mongoose");
 const stablishConnection = require("./db/connection");
 const authRoutes = require("./routes/authRoutes");
-
+const judgeRoutes = require("./routes/judgeRoutes");
 // importing Middlewares
 app.use('/api/auth',authRoutes);
-
+app.use('/api/judge',judgeRoutes);
 // Establishing the mongoose connection
 stablishConnection();
 
