@@ -6,7 +6,7 @@ const cookieParser = require('cookie-parser');
 const dotenv = require('dotenv');
 app.use(cors());
 app.use(cookieParser());
- 
+const numCPUs = require('os').cpus().length;
 // .evn congif
 dotenv.config();
 
@@ -31,5 +31,6 @@ stablishConnection();
 
 
 app.listen(port,()=>{
+    // console.log(numCPUs)
     console.log("Server is up and running on the port", port);
 });
