@@ -24,15 +24,14 @@ const executionWorker = new Worker('execution-queue', async (job) => {
   const fileName = `solution_${jobId}`;
 
   try {
-    // Write code to file
+
     await writeFilePromise(`sandbox/${fileName}.c`, code);
     console.log(`Code written successfully to the file ${fileName}.c`);
 
-    // Verify the written file
     const writtenCode = fs.readFileSync(`sandbox/${fileName}.c`, 'utf-8');
     console.log(`Written Code: ${writtenCode}`);
 
-    // Compile code
+  
     compilationTimeStart = Date.now();
     await spawnPromise('gcc', [`sandbox/${fileName}.c`, '-static', '-static-libgcc', '-static-libstdc++', '-o', `sandbox/${fileName}`]);
     compilationTimeEnd = Date.now();
@@ -40,17 +39,17 @@ const executionWorker = new Worker('execution-queue', async (job) => {
     console.log("Compilation Time:", compilationTime);
     console.log("Code compiled successfully");
 
-    // Verify the compiled binary
+   
     const binaryStats = fs.statSync(`sandbox/${fileName}`);
     console.log(`Binary Size: ${binaryStats.size} bytes`);
 
-    // Execute compiled binary with Docker
+    
     const { outputFilePath, stderr, verdict } = await runDockerWithTimeout(fileName, 5000); // 5 seconds timeout
 
     console.log("Sandbox executed successfully");
     if (stderr) console.error(stderr);
 
-    // Cleanup
+   
     await unlinkPromise(`sandbox/${fileName}`);
     await unlinkPromise(`sandbox/${fileName}.c`);
 
@@ -59,7 +58,7 @@ const executionWorker = new Worker('execution-queue', async (job) => {
   } catch (err) {
     console.error("Error:", err);
 
-    // Cleanup in case of error
+  
     await unlinkPromise(`sandbox/${fileName}.c`).catch((err) => console.error("Cleanup error:", err));
     await unlinkPromise(`sandbox/${fileName}`).catch((err) => console.error("Cleanup error:", err));
     await unlinkPromise(outputFile).catch((err) => console.error("Cleanup error:", err));
@@ -90,7 +89,7 @@ exports.submitController = async (req, res) => {
   }
 };
 
-// Utility function to promisify spawn
+
 const spawnPromise = (command, args, options) => {
   return new Promise((resolve, reject) => {
     const child = spawn(command, args, options);
@@ -114,7 +113,7 @@ const spawnPromise = (command, args, options) => {
   });
 };
 
-// Utility function to run Docker with a timeout and output size limit
+
 const runDockerWithTimeout = (fileName, timeout) => {
   return new Promise((resolve, reject) => {
     const outputFilePath = `sandbox/output_${fileName}.txt`;
