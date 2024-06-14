@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
-
+#include <string.h>
 int main() {
     // Attempt to read a sensitive file
     FILE *fp;
@@ -31,10 +31,17 @@ int main() {
     // Attempt to consume excessive resources
     size_t size = 1024 * 1024 * 1024; // 1GB
     void *ptr = malloc(size);
+
     if (ptr == NULL) {
         perror("Failed to allocate memory");
     } else {
-        printf("Allocated 1GB of memory.\n");
+        // Touch the memory to force allocation
+        void* allocated = memset(ptr, 0, size);
+        if(allocated == NULL){
+            printf("Allocationg of the 1GB memory is unsuccessfull\n");
+        }else{
+            printf("Allocated 1GB of memory.\n");
+        }
         free(ptr);
     }
 
