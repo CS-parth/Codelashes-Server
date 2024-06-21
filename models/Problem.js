@@ -6,16 +6,20 @@ const ProblemSchema = new mongoose.Schema({
         required: true
     },
     Constraints : {
-        
+        type: String,
+        required: true
     },
     Input : {
-
+        type: String,
+        required: true
     },
     Output : {
-
+        type: String,
+        required: true
     },
     sampleTestcase : {
-        
+        type: String,
+        required: true
     },
     time : {
         type: String,

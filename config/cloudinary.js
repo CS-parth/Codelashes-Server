@@ -7,8 +7,8 @@ cloudinary.config({
     api_secret: "_0MEvWOk7_vBfAcRBxm_XSqCivE"
 })
 
-uploadToCloudinary = (path,folder) => {
-    return cloudinary.v2.uploader.upload(path,folder)
+uploadToCloudinary = async (path,folder) => {
+    return cloudinary.v2.uploader.upload(path,{folder})
                                  .then((data)=>{
                                     return { url: data.url, public_id: data.public_id }
                                  })
@@ -23,4 +23,4 @@ removeFromCloudinary = async (public_id) => {
     })
 }
 
-module.exports = { uploadToCloudinary, removeEventListener };
+module.exports = { uploadToCloudinary, removeFromCloudinary };

@@ -1,5 +1,5 @@
 const mongoose = require("mongoose");
-
+const { testcaseSchema } = require("./Testcase");
 const SubmissionSchema = new mongoose.Schema({
   problem: {
     type: mongoose.Types.ObjectId,
@@ -12,11 +12,11 @@ const SubmissionSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
-  user: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "User",
-    required: true,
-  },
+  // user: {
+  //   type: mongoose.Schema.Types.ObjectId,
+  //   ref: "User",
+  //   required: true,
+  // },
   date: {
     type: Date,
     default: Date.now,
@@ -25,7 +25,7 @@ const SubmissionSchema = new mongoose.Schema({
     type: String, // final verdict of after running all the testcases
   },
   result: {
-    type: [testcases], // result of the complete testcases
+    type: [testcaseSchema], // result of the complete testcases
     required: true,
   },
 },{timestamps: true});

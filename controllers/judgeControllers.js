@@ -6,6 +6,9 @@ const writeFilePromise = util.promisify(fs.writeFile);
 const unlinkPromise = util.promisify(fs.unlink);
 const readLine = require('readline');
 const Stream = require('stream');
+const Submission = require('../models/Submission');
+const { Testcase } = require('../models/Testcase');
+const { fetchFileFromFirebase } = require("../config/firebase");
 const connection = {
   host: '127.0.0.1',
   port: '6379'
@@ -15,14 +18,13 @@ const connection = {
 const executionQueue = new Queue('execution-queue', { connection });
 
 const executionWorker = new Worker('execution-queue', async (job) => {
-  const { code, jobId } = job.data;
-  console.log(code);
-
+  const { problem, code, jobId } = job.data;
+  const newSubmission = new Submission({problem,code,language:"C"});
   let compilationTimeStart;
   let compilationTimeEnd;
   let compilationTime;
   const fileName = `solution_${jobId}`;
-
+  let areFilesRemoved = true;
   try {
 
     await writeFilePromise(`sandbox/${fileName}.c`, code);
@@ -43,25 +45,43 @@ const executionWorker = new Worker('execution-queue', async (job) => {
     const binaryStats = fs.statSync(`sandbox/${fileName}`);
     console.log(`Binary Size: ${binaryStats.size} bytes`);
 
-    
-    const { outputFilePath, stderr, verdict } = await runDockerWithTimeout(fileName, 5000); // 5 seconds timeout
-
+    const Testcases = await Testcase.find({
+      problem:`${problem}`
+    });
+    // const testcase = Testcases[0];
+    let executionError = "";
+    let finalVerdict = "";
+    const processTestcases = async (array)=>{
+      for(const testcase of array){
+        console.log(testcase);
+        await fetchFileFromFirebase(testcase.data.url,`./sandbox/${jobId}_${testcase.data.access_token}.txt`);
+        await fetchFileFromFirebase(testcase.answer.url,`./sandbox/${jobId}_${testcase.answer.access_token}.txt`);
+        const { outputFilePath, stderr, verdict } = await runDockerWithTimeout(fileName, 5000, `./sandbox/${jobId}_${testcase.data.access_token}.txt`, `./sandbox/${jobId}_${testcase.answer.access_token}.txt`); // 5 seconds timeout
+        finalVerdict = verdict;
+        console.log(verdict);
+        if(finalVerdict != "Accepted") break;
+        await unlinkPromise(outputFilePath).catch((err) => console.error("Cleanup error:", err));
+        await unlinkPromise(`./sandbox/${jobId}_${testcase.data.access_token}.txt`).catch((err) => console.error("Cleanup error:", err));
+        await unlinkPromise(`./sandbox/${jobId}_${testcase.answer.access_token}.txt`).catch((err) => console.error("Cleanup error:", err));
+      }
+    }
+    await processTestcases(Testcases);
     console.log("Sandbox executed successfully");
-    if (stderr) console.error(stderr);
 
-   
-    await unlinkPromise(`sandbox/${fileName}`);
-    await unlinkPromise(`sandbox/${fileName}.c`);
+    if (executionError.length) console.error(stderr);
 
-    return { message: 'Successfully compiled and executed', compilationTime, outputFilePath , verdict };
+    await Promise.all([unlinkPromise(`sandbox/${fileName}`),unlinkPromise(`sandbox/${fileName}.c`)]); 
+    
+    areFilesRemoved = false;
+    
+    return { message: 'Successfully compiled and executed', compilationTime, finalVerdict };
 
   } catch (err) {
     console.error("Error:", err);
-
-  
-    await unlinkPromise(`sandbox/${fileName}.c`).catch((err) => console.error("Cleanup error:", err));
-    await unlinkPromise(`sandbox/${fileName}`).catch((err) => console.error("Cleanup error:", err));
-    await unlinkPromise(outputFile).catch((err) => console.error("Cleanup error:", err));
+    if(areFilesRemoved){
+      await unlinkPromise(`sandbox/${fileName}.c`).catch((err) => console.error("Cleanup error:", err));
+      await unlinkPromise(`sandbox/${fileName}`).catch((err) => console.error("Cleanup error:", err));
+    }
     throw err;
   }
 }, { connection }); // it's on auto run
@@ -74,10 +94,11 @@ executionWorker.on('failed', (job, err) => {
 });
 
 exports.submitController = async (req, res) => {
-  // Before adding the tasks to the queue make them into the submissions 
+  // Before adding the tasks to the queue make them into the submissions
   const jobId = `job-${Date.now()}`;
   try {
     const response = await executionQueue.add('execute', {
+      problem: req.body.problem,
       code: req.body.code,
       jobId: jobId
     }); // add auto removals
@@ -113,12 +134,11 @@ const spawnPromise = (command, args, options) => {
   });
 };
 
-
-const runDockerWithTimeout = (fileName, timeout) => {
+const runDockerWithTimeout = (fileName, timeout, testcaseFile,answerFile) => {
   return new Promise((resolve, reject) => {
     const outputFilePath = `sandbox/output_${fileName}.txt`;
     const outputFile = fs.createWriteStream(outputFilePath);
-    const child = spawn('sh', ['-c', `cat sandbox/${fileName} | docker run --runtime=runsc --rm -i --memory=256m --stop-timeout 3 sandbox_test:latest`]);
+    const child = spawn('sh', ['-c', `cat sandbox/${fileName} | docker run --runtime=runsc --rm -i --memory=256m --stop-timeout 3 -v ${testcaseFile}:/testcase.txt -v ${answerFile}:/answer.txt sandbox_test:latest /sandbox /testcase.txt /answer.txt`]);
     let stderr = '';
     let streamClosed = false;
     let verdict = '';
@@ -169,6 +189,7 @@ const runDockerWithTimeout = (fileName, timeout) => {
           break;
       }  
     }
+    
     child.stdin.end();
     
     child.stdout.pipe(outputFile);

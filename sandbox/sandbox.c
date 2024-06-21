@@ -62,7 +62,7 @@ int main(int argc, char **argv)
         exit(0);
     }
 
-    FILE *process_fd = popen("timeout 2s ./binary", "r");
+    FILE *process_fd = popen("timeout 2s ./binary < ./testcase.txt", "r");
     if (process_fd == NULL)
     {
         fprintf(stdout, "Failed to execute the binary\n");

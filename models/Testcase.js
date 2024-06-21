@@ -2,23 +2,40 @@ const mongoose = require('mongoose');
 
 const testcaseSchema = new mongoose.Schema({
     time: {
-      type: Number,
-      required: true,
+      type: Number
     },
     memory: {
-      type: Number,
-      required: true,
+      type: Number
     },
     data: {
-        type: String, // url of the testcase
-        required: true
+        url: {
+          type: String,
+          required: true
+        },
+        access_token: {
+          type: String,
+          required: true
+        }
+    },
+    answer: {
+        url: {
+          type: String,
+          required: true
+        },
+        access_token: {
+          type: String,
+          required: true
+        }
     },
     verdict: {
-      type: String,
-      required: true,
+      type: String
     },
+    problem: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Problem'
+    }
 });
 
 const Testcase = mongoose.model("Testcase",testcaseSchema);
 
-module.exports = Testcase;
+module.exports = { Testcase, testcaseSchema } ;
