@@ -1,5 +1,5 @@
 const admin = require('firebase-admin');
-const serviceAccount = require('./codelashes-firebase-adminsdk-h3pkb-c742a1715e.json');
+const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
 const fs = require('fs');
 const crypto = require('crypto');
 const { v4: uuidv4 } = require('uuid');
