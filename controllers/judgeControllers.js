@@ -7,6 +7,7 @@ const unlinkPromise = util.promisify(fs.unlink);
 const readLine = require('readline');
 const Stream = require('stream');
 const Submission = require('../models/Submission');
+const Problem = require("../models/Problem");
 const { Testcase } = require('../models/Testcase');
 const { fetchFileFromFirebase } = require("../config/firebase");
 const connection = {
@@ -19,6 +20,12 @@ const executionQueue = new Queue('execution-queue', { connection });
 
 const executionWorker = new Worker('execution-queue', async (job) => {
   const { problem, code, jobId } = job.data;
+
+  // check if the problem exists 
+  const existingProblem = await Problem.findById(problem);
+  if(existingProblem == null){
+      throw new Error("Problem Id is Incorrect");
+  }
   const newSubmission = new Submission({problem,code,language:"C"});
   let compilationTimeStart;
   let compilationTimeEnd;
@@ -138,7 +145,10 @@ const runDockerWithTimeout = (fileName, timeout, testcaseFile,answerFile) => {
   return new Promise((resolve, reject) => {
     const outputFilePath = `sandbox/output_${fileName}.txt`;
     const outputFile = fs.createWriteStream(outputFilePath);
-    const child = spawn('sh', ['-c', `cat sandbox/${fileName} | docker run --runtime=runsc --rm -i --memory=256m --stop-timeout 3 -v ${testcaseFile}:/testcase.txt -v ${answerFile}:/answer.txt sandbox_test:latest /sandbox /testcase.txt /answer.txt`]);
+    const child = spawn('sh', ['-c', `cat sandbox/${fileName} | docker run --runtime=runsc --rm -i --memory=256m --stop-timeout 3 \
+                                                                --mount type=bind,source=${testcaseFile},target=/testcase.txt,readonly \
+                                                                --mount type=bind,source=${answerFile},target=/answer.txt,readonly \
+                                                                sandbox_test:latest /sandbox /testcase.txt /answer.txt`]);
     let stderr = '';
     let streamClosed = false;
     let verdict = '';
