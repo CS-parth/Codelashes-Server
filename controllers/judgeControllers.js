@@ -147,7 +147,7 @@ const runDockerWithTimeout = (fileName, timeout, testcaseFile,answerFile) => {
     const outputFile = fs.createWriteStream(outputFilePath);
     const child = spawn('sh', ['-c', `cat sandbox/${fileName} | docker run --runtime=runsc --rm -i --memory=256m --stop-timeout 3 \
                                                                 --mount type=bind,source=${testcaseFile},target=/testcase.txt,readonly \
-                                                                --mount type=bind,source=${answerFile},target=/answer.txt,readonly \
+                                                                --mount type=bind,source=${answerFile},target=/answer.txt \
                                                                 sandbox_test:latest /sandbox /testcase.txt /answer.txt`]);
     let stderr = '';
     let streamClosed = false;
@@ -186,8 +186,9 @@ const runDockerWithTimeout = (fileName, timeout, testcaseFile,answerFile) => {
         case 0:
           verdict = "Accepted"
           break;
-        case 1:
+        case 2000:
           verdict = "Wrong Answer"
+          break;
         case 15:
           verdict = "Time Limit Excceded"
           break;

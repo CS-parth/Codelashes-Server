@@ -4,6 +4,7 @@
 #include <fcntl.h>
 #include <stdbool.h>
 #include <sys/wait.h>
+#include<string.h>
 
 #define BUFFER_SIZE 4096
 #define OUTPUT_BUFFER 1024
@@ -48,6 +49,60 @@ void write_stdin_to_file(int *size)
     // wrote the file, close it.
     fclose(fp);
 }
+
+int compare_files(FILE *out, FILE *ans) {
+    int ch1, ch2;  
+    int line = 1;
+    int col  = 0;
+    
+    rewind(out); // If we do not reset the pointer than we will get ?? symbols 
+    rewind(ans); // imp to reset as garbage (EOF) will get matched --> AC
+
+    while (1) {
+        ch1 = fgetc(out);
+        ch2 = fgetc(ans);
+        
+        if (ch1 == EOF && ch2 == EOF) {
+            return 0;
+        }
+        if (ch1 == EOF || ch2 == EOF) {
+            return 2000;
+        }
+ 
+        if (ch1 == '\n') {
+            line += 1;
+            col = 0;
+        }
+
+
+        if (ch1 != ch2) {
+            return 2000;
+        }
+
+        col++;
+    }
+}
+
+void sanitize_file(FILE *file){
+    long write_pos = 0;
+    long read_pos = 0;
+    char line[10000];
+
+    while(fgets(line,sizeof(line),file) != NULL){
+        read_pos = ftell(file);
+
+        if(line[0] !='\n' && line[0] != '\r'){
+            fseek(file,write_pos,SEEK_SET);
+            fputs(line,file);
+            write_pos = ftell(file);
+            fseek(file,read_pos,SEEK_SET);
+        }
+    }
+
+    ftruncate(fileno(file), write_pos);
+    fflush(file);
+}
+
 
 int main(int argc, char **argv)
 {
@@ -95,14 +150,31 @@ int main(int argc, char **argv)
         fprintf(outputFile, "%s", output_buffer); // instead of stdout place it in a file and then compare the file with the answer.txt
     }
 
+    fclose(outputFile);
+
     int termination_status = pclose(process_fd);
     // printf("%d",status);
     if (WIFEXITED(termination_status))
     {
         int exit_code = WEXITSTATUS(termination_status);
-        fprintf(stdout,"%d",exit_code); 
         // if exit_code is 0 check if the ouput.txt mathches with the answers for each testcases
         // return exit_code;
+        if(exit_code == 0){
+            FILE *out = fopen("output.txt","r+");
+            FILE *ans = fopen("answer.txt","r+");
+            if(ans == NULL){
+                printf("FILES DO NOT EXITST");
+                return -1;
+            }
+            sanitize_file(out);
+            sanitize_file(ans);
+            int res = compare_files(out,ans);
+            fclose(out);
+            fclose(ans);
+            fprintf(stdout,"%d",res);
+        }else{
+            fprintf(stdout,"%d",exit_code); 
+        }
     }
     else if (WIFSIGNALED(termination_status))
     {
