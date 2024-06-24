@@ -2,7 +2,7 @@ const mongoose = require('mongoose');
 
 
 const stablishConnection = ()=>{
-  mongoose.connect('mongodb://localhost:27017/Codelashes?directConnection=true', {
+  mongoose.connect(process.env.MONGODB_URI, {
     useNewUrlParser: true,
     useUnifiedTopology: true
   })
