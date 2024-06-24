@@ -1,1 +1,4 @@
 /node_modules
+/storage
+.env
+config/codelashes-firebase-adminsdk-h3pkb-c742a1715e.json
