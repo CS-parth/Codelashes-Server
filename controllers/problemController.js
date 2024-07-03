@@ -37,3 +37,25 @@ exports.createProblem = async (req,res) => {
         res.status(400).send(`${err}`);
     }
 }
+
+exports.getProblem = async (req, res) => {
+    try {
+        const id = req.params.id;
+        console.log(id);
+        
+        if (!id) {
+            return res.status(400).json({ message: "Invalid problem ID" });
+        }
+
+        const existingProblem = await Problem.findById(id);
+        
+        if (!existingProblem) {
+            return res.status(404).json({ message: "Problem does not exist" });
+        }
+        
+        res.status(200).json(existingProblem);
+    } catch (error) {
+        console.error('Error retrieving problem:', error);
+        res.status(500).json({ message: "Internal server error" });
+    }
+}

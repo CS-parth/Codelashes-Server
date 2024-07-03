@@ -11,27 +11,24 @@ const mongoose = require("mongoose");
 // .env config
 dotenv.config();
 
-// Importing Routes
+// importing Routes
 const authRoutes = require("./routes/authRoutes");
 const judgeRoutes = require("./routes/judgeRoutes");
 const problemRoutes = require("./routes/problemRoutes");
 
-// Establishing the mongoose connection
+// establishing the mongoose connection
 const stablishConnection = require("./db/connection");
 stablishConnection();
 
 if (cluster.isPrimary) {
   console.log(`Primary ${process.pid} is running`);
-
-  // Fork workers.
   for (let i = 0; i < numCPUs; i++) {
     cluster.fork();
   }
 
   cluster.on('exit', (worker, code, signal) => {
     console.log(`Worker ${worker.process.pid} died`);
-    // Optionally, you can respawn a new worker here
-    cluster.fork();
+    // cluster.fork();
   });
 } else {
   // Express Configuration
@@ -42,13 +39,13 @@ if (cluster.isPrimary) {
   app.use(express.urlencoded({ extended: false }));
   app.use(express.json());
 
-  // Importing Middlewares
+  // importing Middlewares
   app.use('/api/auth', authRoutes);
   app.use('/api/judge', judgeRoutes);
   app.use('/api/problem', problemRoutes);
 
   console.log(`Worker ${process.pid} started`);
   app.listen(port, () => {
-    console.log("Server is up and running on port", port);
+    process.stdout.write(`Server is up and running on ${port}\n`);
   });
 }

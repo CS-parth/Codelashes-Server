@@ -66,10 +66,10 @@ const executionWorker = new Worker('execution-queue', async (job) => {
         const { outputFilePath, stderr, verdict } = await runDockerWithTimeout(fileName, 5000, `./sandbox/${jobId}_${testcase.data.access_token}.txt`, `./sandbox/${jobId}_${testcase.answer.access_token}.txt`); // 5 seconds timeout
         finalVerdict = verdict;
         console.log(verdict);
-        if(finalVerdict != "Accepted") break;
         await unlinkPromise(outputFilePath).catch((err) => console.error("Cleanup error:", err));
         await unlinkPromise(`./sandbox/${jobId}_${testcase.data.access_token}.txt`).catch((err) => console.error("Cleanup error:", err));
         await unlinkPromise(`./sandbox/${jobId}_${testcase.answer.access_token}.txt`).catch((err) => console.error("Cleanup error:", err));
+        if(finalVerdict != "Accepted") break; 
       }
     }
     await processTestcases(Testcases);

@@ -7,7 +7,7 @@ const stablishConnection = ()=>{
     useUnifiedTopology: true
   })
   .then(() => {
-    console.log('MongoDB connected successfully');
+    process.stdout.write('MongoDB connected successfully\n');
   })
   .catch(err => {
     console.error('MongoDB connection failed:', err);
