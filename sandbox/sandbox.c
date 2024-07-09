@@ -88,6 +88,8 @@ void sanitize_file(FILE *file){
     long read_pos = 0;
     char line[10000];
 
+    fseek(file, 0, SEEK_SET);
+
     while(fgets(line,sizeof(line),file) != NULL){
         read_pos = ftell(file);
 
@@ -98,6 +100,7 @@ void sanitize_file(FILE *file){
             fseek(file,read_pos,SEEK_SET);
         }
     }
+    if(line[strlen(line)-1] == '\n' || line[strlen(line)-1] == '\r') write_pos--;
 
     ftruncate(fileno(file), write_pos);
     fflush(file);
