@@ -1,10 +1,25 @@
 const Contest = require('../models/Contest');
-
+const mongoose = require('mongoose');
 exports.createContest = async (req,res)=>{
     try{
-        const {name,setters,date,time,duration,problems} = req.body;
-        const newContest = new Contest({name,setters,date,time,duration,problems});
+        const {name,setters,startDate,startTime,duration,description,rules} = req.body;
+        const newContest = new Contest();
+        newContest.name = name;
+        newContest.setters = setters.map((id)=>new mongoose.Types.ObjectId(id));
+        const [hours,minutes] = startTime.split(':').map(Number);
+        newContest.startDate = moment(startDate).set({hours,minutes,seconds:0});
+        newContest.startTime = startTime;
+        newContest.duration = duration;
+        newContest.endDate = moment(newContest.startDate).add(moment.duration(duration));
+        newContest.description = description;
+        newContest.rules = rules;
+        
         await newContest.save();
+
+        // scheduling events for the contestStart and contestEnd
+        schedule.scheduleJob(moment(newContest.startDate).toDate(), () => startContest(newContest.contestId));
+        schedule.scheduleJob(moment(newContest.startDate).toDate(), () => endContest(newContest.contestId));
+
         res.status(200).json({"message": `Contest created successfully with id : ${newContest._id}`});
     }catch(err){
         console.error(err);
@@ -50,36 +65,48 @@ exports.getContestList = async (req, res) => {
     }
 }
 
-// const schedule = require('node-schedule');
-// const moment = require('moment');
+exports.getContestMeta = async (req,res) => {
+    try {
+        const { id } = req.params;
+        console.log(id);
+        const existingContest = await Contest.findById(id,'name setters date startTime duration')
+                                             .populate("setters");
+
+        if(!existingContest) {
+            return res.status(404).json({message: "Contest does not exists"});
+        }
+
+        res.status(200).json(existingContest);
+    } catch(err) {
+        console.error(err);
+        res.status(500).json({message: "Internal Server Error"});
+    }
+}
+
+const schedule = require('node-schedule');
+const moment = require('moment');
 // const io = require('socket.io')(server);
+const { io } = require('../utils/socket-io');
 
 // // Example contest data
 // const contests = [
 //   { contestId: '1', startTime: '2024-07-09T12:00:00Z', duration: 120 }, // Duration in minutes
 // ];
 
-// function startContest(contestId) {
-//   io.emit('contestStarted', { contestId });
-//   console.log(`Contest ${contestId} started`);
-// }
+function startContest(contestId) {
+  io.emit('contestStarted', { contestId });
+  console.log(`Contest ${contestId} started`);
+}
 
-// function endContest(contestId) {
-//   io.emit('contestEnded', { contestId });
-//   console.log(`Contest ${contestId} ended`);
-//   calculateRatings(contestId);
-// }
+function endContest(contestId) {
+  io.emit('contestEnded', { contestId });
+  console.log(`Contest ${contestId} ended`);
+  calculateRatings(contestId);
+}
 
 // function ratingCalculationComplete(contestId) {
 //   io.emit('ratingCalculationComplete', { contestId });
 //   console.log(`Rating calculation for contest ${contestId} completed`);
-// }
-
-// function calculateRatings(contestId) {
-//   // Simulate rating calculation delay
-//   setTimeout(() => {
-//     ratingCalculationComplete(contestId);
-//   }, 10000); // 10 seconds for demo purposes
 // }
 
 // // Schedule the events

@@ -35,5 +35,6 @@ module.exports = {
     socketConnection,
     sendMessage,
     getRooms,
-    emitMessage
+    emitMessage,
+    io
 };

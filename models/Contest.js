@@ -8,13 +8,16 @@ const contestSchema = new mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User',
     }],
-    "date": String,
+    "startDate": String, // use moment to create date and time
     "startTime": String,
+    "endDate": String,
     "duration": String,
     "problems": [{
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Problem'
-    }]
+    }],
+    "description": String,
+    "rules": String
 });
 
 const Contest = new mongoose.model('Contest',contestSchema);

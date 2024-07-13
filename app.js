@@ -48,7 +48,9 @@ stablishConnection();
   const server = http.createServer(app);
   const { socketConnection, sendMessage, getRooms, emitMessage } = require('./utils/socket-io');
   socketConnection(server);
-  
+
+  // JS 
+  require('./utils/ratingSystem');
   // importing Middlewares
   app.use('/api/auth', authRoutes);
   app.use('/api/judge', judgeRoutes);
@@ -56,7 +58,6 @@ stablishConnection();
   app.use('/api/contest', contestRoutes);
   app.use('/api/submission', submissionnRoutes);
   console.log(`Worker ${process.pid} started`);
-  
 
   server.listen(port, () => {
     process.stdout.write(`Server is up and running on ${port}\n`);

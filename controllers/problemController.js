@@ -61,13 +61,25 @@ exports.getProblem = async (req, res) => {
 
 exports.getProblemList = async (req, res) => {
     try {
-        const allProblems = await Problem.find({},'_id number title acceptance difficulty contest').exec();
+        const allProblems = await Problem.find({},'_id number title acceptance difficulty contest')
+                                         .populate({
+                                            path: 'contest',
+                                            select: 'startTime duration'
+                                         })
+                                         .exec();
         
         if (!allProblems) {
             return res.status(404).json({ message: "No problems to pesent" });
         }
-        
-        res.status(200).json(allProblems);
+        const filteredProblems = allProblems.filter((problem)=>{
+            if(!problem.contest) return true;
+            
+            const contestStartTime = problem.contest.startTime;
+            const contestEndTime = contestStartTime.clone().add(parseInt(problem.contest.duration),'minutes');
+            
+            return moment().isAfter(contestEndTime);
+        })
+        res.status(200).json(filteredProblems);
     } catch (error) {
         console.error('Error retrieving problem:', error);
         res.status(500).json({ message: "Internal server error" });
