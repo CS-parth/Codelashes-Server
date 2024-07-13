@@ -28,6 +28,23 @@ const ProblemSchema = new mongoose.Schema({
     memory : {
         type: String,
         required: true
+    },
+    title : {
+        type: String,
+        required: true
+    },
+    acceptance : {
+        type: String,
+        required: true
+    },
+    difficulty : {
+        type: Number,
+        required: true
+    },
+    contest: {
+        type: mongoose.Types.ObjectId,
+        ref:'Contest',
+        required: true
     }
 });
 

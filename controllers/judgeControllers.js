@@ -10,6 +10,8 @@ const Submission = require('../models/Submission');
 const Problem = require("../models/Problem");
 const { Testcase } = require('../models/Testcase');
 const { fetchFileFromFirebase } = require("../config/firebase");
+const {emitMessage,sendMessage, getRooms} = require("../utils/socket-io");
+const Contest = require('../models/Contest');
 const connection = {
   host: '127.0.0.1',
   port: '6379'
@@ -19,14 +21,24 @@ const connection = {
 const executionQueue = new Queue('execution-queue', { connection });
 
 const executionWorker = new Worker('execution-queue', async (job) => {
-  const { problem, code, jobId } = job.data;
+  const { username,contest,roomId, problem, code, jobId } = job.data;
 
   // check if the problem exists 
   const existingProblem = await Problem.findById(problem);
   if(existingProblem == null){
       throw new Error("Problem Id is Incorrect");
   }
-  const newSubmission = new Submission({problem,code,language:"C"});
+  const newSubmission = new Submission({username,contest,problem,code,language:"C"});
+  
+  const contestId = req.body.contest;
+  const existingContest = await Contest.findById(contestId);
+  const contestEndTime = moment(existingContest.startTime).add(existingContest.duration, 'minutes');
+  if (moment().isBefore(contestEndTime) && moment().isAfter(existingContest.startTime)) {
+    newSubmission.isRated = true;
+  } else {
+    newSubmission.isRated = false;
+  }
+
   let compilationTimeStart;
   let compilationTimeEnd;
   let compilationTime;
@@ -66,10 +78,10 @@ const executionWorker = new Worker('execution-queue', async (job) => {
         const { outputFilePath, stderr, verdict } = await runDockerWithTimeout(fileName, 5000, `./sandbox/${jobId}_${testcase.data.access_token}.txt`, `./sandbox/${jobId}_${testcase.answer.access_token}.txt`); // 5 seconds timeout
         finalVerdict = verdict;
         console.log(verdict);
-        if(finalVerdict != "Accepted") break;
         await unlinkPromise(outputFilePath).catch((err) => console.error("Cleanup error:", err));
         await unlinkPromise(`./sandbox/${jobId}_${testcase.data.access_token}.txt`).catch((err) => console.error("Cleanup error:", err));
         await unlinkPromise(`./sandbox/${jobId}_${testcase.answer.access_token}.txt`).catch((err) => console.error("Cleanup error:", err));
+        if(finalVerdict != "Accepted") break; 
       }
     }
     await processTestcases(Testcases);
@@ -80,8 +92,10 @@ const executionWorker = new Worker('execution-queue', async (job) => {
     await Promise.all([unlinkPromise(`sandbox/${fileName}`),unlinkPromise(`sandbox/${fileName}.c`)]); 
     
     areFilesRemoved = false;
-    
-    return { message: 'Successfully compiled and executed', compilationTime, finalVerdict };
+    newSubmission.verdict = finalVerdict;
+    newSubmission.jobId = jobId;
+    newSubmission.save();
+    return { message: 'Successfully compiled and executed', compilationTime, finalVerdict, roomId };
 
   } catch (err) {
     console.error("Error:", err);
@@ -94,6 +108,7 @@ const executionWorker = new Worker('execution-queue', async (job) => {
 }, { connection }); // it's on auto run
 
 executionWorker.on('completed', (job, result) => {
+  sendMessage(result.roomId,"verdict",result);
   console.log(`Job ${job.id} completed successfully with result:`, result);
 });
 executionWorker.on('failed', (job, err) => {
@@ -105,6 +120,9 @@ exports.submitController = async (req, res) => {
   const jobId = `job-${Date.now()}`;
   try {
     const response = await executionQueue.add('execute', {
+      username: req.body.username,
+      contest: req.body.contest,
+      roomId: req.body.roomId,
       problem: req.body.problem,
       code: req.body.code,
       jobId: jobId

@@ -3,6 +3,7 @@ const { testcaseSchema } = require("./Testcase");
 const SubmissionSchema = new mongoose.Schema({
   problem: {
     type: mongoose.Types.ObjectId,
+    ref: "Problem",
     required: true,
   },
   code: {
@@ -28,6 +29,17 @@ const SubmissionSchema = new mongoose.Schema({
     type: [testcaseSchema], // result of the complete testcases
     required: true,
   },
+  jobId: String,
+  username: {
+    type: String,
+    required: true
+  },
+  contest: {
+     type: mongoose.Types.ObjectId,
+     ref:"Contest",
+     required: true
+  },
+  isRated: Boolean
 },{timestamps: true});
 
 const Submission = mongoose.model("Submission", SubmissionSchema);
