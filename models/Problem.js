@@ -5,15 +5,15 @@ const ProblemSchema = new mongoose.Schema({
         type: String,
         required: true
     },
-    Constraints : {
+    constraints : {
         type: String,
         required: true
     },
-    Input : {
+    input : {
         type: String,
         required: true
     },
-    Output : {
+    output : {
         type: String,
         required: true
     },
@@ -34,8 +34,7 @@ const ProblemSchema = new mongoose.Schema({
         required: true
     },
     acceptance : {
-        type: String,
-        required: true
+        type: Number,
     },
     difficulty : {
         type: Number,
@@ -43,8 +42,7 @@ const ProblemSchema = new mongoose.Schema({
     },
     contest: {
         type: mongoose.Types.ObjectId,
-        ref:'Contest',
-        required: true
+        ref:'Contest'
     }
 });
 
