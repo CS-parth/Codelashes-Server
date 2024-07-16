@@ -44,7 +44,7 @@ async function calculateRatings(contestId) {
       const submissions = await Submission.aggregate([
         {
           '$match': {
-            'contest': new mongoose.Types.ObjectId('668bce473136ded82a520040'), 
+            'contest': new mongoose.Types.ObjectId(contestId), 
             'isRated': true, 
             'username': participant
           }
