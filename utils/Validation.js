@@ -28,6 +28,20 @@ class Validation{
         const user = await User.findById(decodedToken.id,'role');
         return user.role;
     }
+    parseRole(role){
+        switch (role) {
+            case process.env.LEAD:
+                return "lead"
+            case process.env.COLEAD:
+                return "co_lead"
+            case process.env.PROBLEM_SETTER:
+                return "problem_setter"
+            case "participant":
+                return "participant" 
+            default:
+                return "anonymous"
+        }
+    }
 }
 
 module.exports = Validation;

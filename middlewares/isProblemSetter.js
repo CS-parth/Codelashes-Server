@@ -1,16 +1,22 @@
 const validation = require("../utils/Validation");
 const Validation = new validation();
 
-const isProblemSetter = async (req,res,next) => {
-    const User = await Validation.getUser(req.cookies.jwt);
-    if(User === null){
-        return res.status(400).json({message: "User not found"});
+const isProblemSetter = async (req, res) => {
+  return new Promise(async (resolve, reject) => {
+    try {
+      const User = await Validation.getUser(req.cookies.jwt);
+      if (User === null) {
+        return reject({ status: 400, message: "User not found" });
+      }
+      if (User.role === process.env.PROBLEM_SETTER) {
+        return resolve();
+      } else {
+        return reject({ status: 403, message: "Unauthorized User" });
+      }
+    } catch (error) {
+      return reject({ status: 500, message: "Internal Server Error" });
     }
-    if(User.role == process.env.PROBLEM_SETTER){
-        next();
-    }else{
-        return res.status(403).json({message: "Unautharized User"});
-    }
+  });
 }
 
 module.exports = isProblemSetter;

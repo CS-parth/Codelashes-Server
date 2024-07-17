@@ -37,10 +37,12 @@ stablishConnection();
 //   });
 // } else {
   // Express Configuration
-  app.use(cors());
   app.use(require('express-status-monitor')());
   const port = process.env.PORT || 7700;
-  app.use(cors());
+  app.use(cors({
+    origin: ["http://localhost:5173","http://localhost:5174"],
+    credentials: true
+  }));
   app.use(cookieParser());
   app.use(express.urlencoded({ extended: false }));
   app.use(express.json());
@@ -57,8 +59,16 @@ stablishConnection();
   app.use('/api/problem', problemRoutes);
   app.use('/api/contest', contestRoutes);
   app.use('/api/submission', submissionnRoutes);
-  console.log(`Worker ${process.pid} started`);
-
+  // console.log(`Worker ${process.pid} started`);
+  app.post("/test",(req,res)=>{
+    console.log(req);
+    try{
+      res.cookie("test","value"); // From Server End there is no error
+      res.status(201).json({message: "Cookie Created Successfully"});
+    }catch(err){
+      res.status(500).send(err);
+    }
+  })
   server.listen(port, () => {
     process.stdout.write(`Server is up and running on ${port}\n`);
   });

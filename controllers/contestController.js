@@ -10,7 +10,8 @@ exports.createContest = async (req,res)=>{
         newContest.startDate = moment(startDate).set({hours,minutes,seconds:0});
         newContest.startTime = startTime;
         newContest.duration = duration;
-        newContest.endDate = moment(newContest.startDate).add(moment.duration(duration));
+        const [durationHours, durationMinutes] = duration.split(':').map(Number);
+        newContest.endDate = moment(newContest.startDate).add(durationHours, 'hours').add(durationMinutes, 'minutes');
         newContest.description = description;
         newContest.rules = rules;
         
