@@ -199,4 +199,5 @@ function unblockSubmissions(contestId) {
   }
 }
 
+module.exports = calculateRatings;
 // calculateRatings("668bce473136ded82a520040");

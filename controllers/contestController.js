@@ -1,5 +1,9 @@
 const Contest = require('../models/Contest');
 const mongoose = require('mongoose');
+const schedule = require('node-schedule');
+const moment = require('moment');
+const { emitMessage } = require('../utils/socket-io');
+const calculateRatings = require("../utils/ratingSystem");
 exports.createContest = async (req,res)=>{
     try{
         const {name,setters,startDate,startTime,duration,description,rules} = req.body;
@@ -11,17 +15,19 @@ exports.createContest = async (req,res)=>{
         newContest.startTime = startTime;
         newContest.duration = duration;
         const [durationHours, durationMinutes] = duration.split(':').map(Number);
-        newContest.endDate = moment(newContest.startDate).add(durationHours, 'hours').add(durationMinutes, 'minutes');
+        newContest.endDate = moment(newContest.startDate,"ddd MMM DD YYYY HH:mm:ss Z+HHmm").add(durationHours, 'hours').add(durationMinutes, 'minutes');
         newContest.description = description;
         newContest.rules = rules;
         
         await newContest.save();
 
         // scheduling events for the contestStart and contestEnd
-        schedule.scheduleJob(moment(newContest.startDate).toDate(), () => startContest(newContest.contestId));
-        schedule.scheduleJob(moment(newContest.startDate).toDate(), () => endContest(newContest.contestId));
+        schedule.scheduleJob(moment(newContest.startDate,"ddd MMM DD YYYY HH:mm:ss Z+HHmm").toDate(), () => startContest(newContest._id));
+        schedule.scheduleJob(moment(newContest.endDate,"ddd MMM DD YYYY HH:mm:ss Z+HHmm").toDate(), () => endContest(newContest._id));
 
-        res.status(200).json({"message": `Contest created successfully with id : ${newContest._id}`});
+        res.status(200).json({
+                            message: `Contest created successfully with id : ${newContest._id}`,
+                            id:`${newContest._id}`});
     }catch(err){
         console.error(err);
         res.status(500).json({"message": "Internal Server Error"});
@@ -31,7 +37,7 @@ exports.createContest = async (req,res)=>{
 exports.getContest = async (req, res) => {
     try {
         const id = req.params.id;
-        
+        // console.log(id);
         if (!id) {
             return res.status(400).json({ message: "Invalid Contest ID" });
         }
@@ -43,7 +49,7 @@ exports.getContest = async (req, res) => {
         if (!existingContest) {
             return res.status(404).json({ message: "Contest does not exist" });
         }
-        
+        // console.log(existingContest);
         res.status(200).json(existingContest);
     } catch (error) {
         console.error('Error retrieving Contest:', error);
@@ -53,7 +59,11 @@ exports.getContest = async (req, res) => {
 
 exports.getContestList = async (req, res) => {
     try {
-        const allContests = await Contest.find({});
+        const allContests = await Contest.find({})
+                                         .populate({
+                                            path: 'setters',
+                                            select:'username'
+                                         });
         
         if (!allContests) {
             return res.status(404).json({ message: "No Contests to pesent" });
@@ -69,8 +79,7 @@ exports.getContestList = async (req, res) => {
 exports.getContestMeta = async (req,res) => {
     try {
         const { id } = req.params;
-        console.log(id);
-        const existingContest = await Contest.findById(id,'name setters date startTime duration')
+        const existingContest = await Contest.findById(id,'name setters startDate startTime endDate duration')
                                              .populate("setters");
 
         if(!existingContest) {
@@ -84,10 +93,8 @@ exports.getContestMeta = async (req,res) => {
     }
 }
 
-const schedule = require('node-schedule');
-const moment = require('moment');
+
 // const io = require('socket.io')(server);
-const { io } = require('../utils/socket-io');
 
 // // Example contest data
 // const contests = [
@@ -95,12 +102,12 @@ const { io } = require('../utils/socket-io');
 // ];
 
 function startContest(contestId) {
-  io.emit('contestStarted', { contestId });
+  emitMessage('contestStarted', { contestId });
   console.log(`Contest ${contestId} started`);
 }
 
 function endContest(contestId) {
-  io.emit('contestEnded', { contestId });
+  emitMessage('contestEnded', { contestId });
   console.log(`Contest ${contestId} ended`);
   calculateRatings(contestId);
 }

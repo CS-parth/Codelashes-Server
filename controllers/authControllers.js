@@ -64,10 +64,8 @@ exports.Signup = (req,res) => {
           newUser = new CoLead({username,email,password,role});
         }else if(role == process.env.PROBLEM_SETTER){
           newUser = new ProblemSetter({username,email,password,role});
-        }else if(role == "participant"){
-          newUser = new Participant({username,email,password,role});
         }else{
-          return res.status(403).json({message: "Incorrect Role Provided"});
+          newUser = new Participant({username,email,password,role:"participant"});
         }
 
         // Hash the password before saving

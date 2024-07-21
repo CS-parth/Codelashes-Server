@@ -22,7 +22,7 @@ class RBACMiddleware extends Middleware {
               const User = await Validation.getUser(req.cookies.jwt);
               req.user = User;
               if (!req.cookies || !req.cookies.jwt) {
-                  return Promise.reject({status:403,err:"JWT token not found"});
+                  return Promise.reject({status:403,message:"JWT token not found"});
               }
               const userRole = req.user ? req.user.role : 'anonymous';
               if (userRole !== 'anonymous') {
@@ -30,10 +30,10 @@ class RBACMiddleware extends Middleware {
                   req.middleware = "rbac";
                   return Promise.resolve();
               } else {
-                  return Promise.reject({status: 403,err: "Access denied"});
+                  return Promise.reject({status: 403,message: "Access denied"});
               }
             }catch(err){
-              Promise.reject({status: 500,err: "Internal Server Error"});
+              Promise.reject({status: 500,message: "Internal Server Error"});
             }
         };
     }
@@ -57,7 +57,7 @@ class RBACMiddleware extends Middleware {
           const User = await Validation.getUser(req.cookies.jwt);
           req.user = User;
           if (!req.cookies || !req.cookies.jwt) {
-              return Promise.reject({status: 403,err: "JWT token not found"});
+              return Promise.reject({status: 403,message: "JWT token not found"});
           }
           const userRole = req.user ? req.user.role : 'anonymous';
           if (userRole !== 'anonymous') {
@@ -66,10 +66,10 @@ class RBACMiddleware extends Middleware {
             req.middleware = "abac";
             return Promise.resolve();
           } else {
-            return Promise.reject({status: 403,err:"Access denied"});
+            return Promise.reject({status: 403,message:"Access denied"});
           }
         }catch(err){
-          return Promise.reject({status:500,err:"Internal Server Error"});
+          return Promise.reject({status:500,message:"Internal Server Error"});
         }
       }
     }
@@ -85,7 +85,7 @@ class RBACMiddleware extends Middleware {
           req.resourse = data[1];
           
           if (!req.cookies || !req.cookies.jwt) {
-            return Promise.reject({ status: 403, err: 'JWT token not found' });
+            return Promise.reject({ status: 403, message: 'JWT token not found' });
           }
   
           const User = await Validation.getUser(req.cookies.jwt);
@@ -97,10 +97,10 @@ class RBACMiddleware extends Middleware {
             req.middleware = "ethicalWall";
             return Promise.resolve();
           } else {
-            return Promise.reject({ status: 403, err: 'Access denied' });
+            return Promise.reject({ status: 403, message: 'Access denied' });
           }
         } catch (error) {
-          return Promise.reject({ status: 500, err: 'Internal server error' });
+          return Promise.reject({ status: 500, message: 'Internal server error' });
         }
       };
     }
@@ -114,7 +114,7 @@ class RBACMiddleware extends Middleware {
           if (userPermissions.includes(req.permission)) {
             return Promise.resolve();
           } else {
-            return Promise.reject({ status: 403, err: 'Access denied' });
+            return Promise.reject({ status: 403, message: 'Access denied' });
           }
         } else if (req.middleware === 'abac') {
           // create conditional set
@@ -135,16 +135,16 @@ class RBACMiddleware extends Middleware {
           if (abacPDP.isAllowed(conditionalSet)) {
             return Promise.resolve();
           } else {
-            return Promise.reject({ status: 403, err: 'Access denied' });
+            return Promise.reject({ status: 403, message: 'Access denied' });
           }
         } else if (req.middleware === 'ethicalWall') {
           // WIll think about this in future
           return Promise.resolve();
         } else {
-          return Promise.reject({ status: 400, err: "Using anonymous policy" });
+          return Promise.reject({ status: 400, message: "Using anonymous policy" });
         }
       } catch (error) {
-        return Promise.reject({ status: 500, err: 'Internal server error' });
+        return Promise.reject({ status: 500, message: 'Internal server error' });
       }
     }
   }

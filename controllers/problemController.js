@@ -29,32 +29,31 @@ exports.createProblem = async (req,res) => {
         const answerZip = req.files.answer[0];
         // console.log(testcaseZip);
         const data = await JSON.parse(req.body.data);
-        const { problemStatement, constraints, input, output, sampleTestcase, time, memory, title, acceptance , difficulty } = data;
-        const newProblem = new Problem({problemStatement,constraints,input,output,sampleTestcase,time,memory,title,acceptance,difficulty});
+        const {problemStatement, constraints, input, output, sampleTestcase, time, memory, title, acceptance , difficulty, contest} = data;
+        const newProblem = new Problem({problemStatement,constraints,input,output,sampleTestcase,time,memory,title,acceptance,difficulty,contest});
         extractPath = path.join(__dirname,"..","storage",Date.now().toString());
-        console.log(extractPath);
+        // console.log(extractPath);
         // return;
         fs.mkdir(extractPath,{recursive: true});
         const testcaseExtractPath = path.join(extractPath,'testcases_kartoos');
         const answerExtractPath = path.join(extractPath,'answers_kartoos');
         // Unzip them
-
         await extractZip(testcaseZip.path,testcaseExtractPath); // making them async
         await extractZip(answerZip.path,answerExtractPath); 
 
         // setTimeout(async ()=>{
         const [testcaseFiles,answerFiles] = await Promise.all([
-            fs.readdir(path.join(testcaseExtractPath,testcaseZip.fieldname)),
-            fs.readdir(path.join(answerExtractPath,answerZip.fieldname))
+            fs.readdir(path.join(testcaseExtractPath,testcaseZip.originalname.split(".")[0])),
+            fs.readdir(path.join(answerExtractPath,answerZip.originalname.split(".")[0]))
         ]);
         if(testcaseFiles.length != answerFiles.length){
             return res.status(403).json({message:"Mismatch in the testcases and answers"});
         }
         const testcasePromises = testcaseFiles.map(async (file,index)=>{
                                     const fileName = genUniqueFileName();
-                                    const testcaseFile = await uploadToFirebase(path.join(testcaseExtractPath,testcaseZip.fieldname,testcaseFiles[index]),`Problem-testcases/${fileName}_testcase_${index}.txt`);
+                                    const testcaseFile = await uploadToFirebase(path.join(testcaseExtractPath,testcaseZip.originalname.split(".")[0],testcaseFiles[index]),`Problem-testcases/${fileName}_testcase_${index}.txt`);
                                     testcaseUrls.push(testcaseFile.fileUrl);
-                                    const answerFile = await uploadToFirebase(path.join(answerExtractPath,answerZip.fieldname,answerFiles[index]),`Problem-answers/${fileName}_answer_${index}.txt`);
+                                    const answerFile = await uploadToFirebase(path.join(answerExtractPath,answerZip.originalname.split(".")[0],answerFiles[index]),`Problem-answers/${fileName}_answer_${index}.txt`);
                                     answerUrls.push(answerFile.fileUrl);
                                     const newTestcase = new Testcase({
                                         data: {
@@ -67,7 +66,7 @@ exports.createProblem = async (req,res) => {
                                         },
                                         problem: newProblem._id
                                     });
-                                    console.log(newTestcase);
+                                    // console.log(newTestcase);
                                     return newTestcase.save();
                                 })
         await Promise.all(testcasePromises);
@@ -92,7 +91,8 @@ exports.createProblem = async (req,res) => {
         if (extractPath) {
             await fs.rm(extractPath, { recursive: true, force: true }).catch(console.error);
         }
-        res.status(400).send(`${err}`);
+        console.error(err);
+        res.status(400).json({message: "Internal Server Error"});
     }
 }
 
@@ -132,7 +132,7 @@ exports.getProblemList = async (req, res) => {
         const filteredProblems = allProblems.filter((problem)=>{
             if(!problem.contest) return true;
             
-            const contestEndTime = moment(problem.contest.endDate);
+            const contestEndTime = moment(problem.contest.endDate,"ddd MMM DD YYYY HH:mm:ss Z+HHmm");
             
             return moment().isAfter(contestEndTime);
         })

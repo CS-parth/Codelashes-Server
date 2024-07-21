@@ -9,12 +9,14 @@
             "create_contest",
             "delete_contest",
             "update_contest",
+            "view_contest",
             "create_blog",
             "delete_blog",
             "update_blog",
             "create_problem",
             "update_problem",
-            "delete_problem"
+            "delete_problem",
+            "view_problem"
         ]
       },
       {
@@ -23,12 +25,14 @@
             "create_contest",
             "delete_contest",
             "update_contest",
+            "view_contest",
             "create_blog",
             "delete_blog",
             "update_blog",
             "create_problem",
             "update_problem",
-            "delete_problem"
+            "delete_problem",
+            "view_problem"
         ]
       },
       {
@@ -37,9 +41,11 @@
             "create_blog",
             "delete_blog",
             "update_blog",
+            "view_contest",
             "create_problem",
             "update_problem",
-            "delete_problem"
+            "delete_problem",
+            "view_problem"
         ]
       },
       {

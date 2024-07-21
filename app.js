@@ -19,6 +19,7 @@ const judgeRoutes = require("./routes/judgeRoutes");
 const problemRoutes = require("./routes/problemRoutes");
 const contestRoutes = require("./routes/contestRoutes");
 const submissionnRoutes = require("./routes/submissionRoutes");
+const userRoutes = require('./routes/userRoutes');
 // establishing the mongoose connection
 const stablishConnection = require("./db/connection");
 //Stablising the connection
@@ -49,16 +50,16 @@ stablishConnection();
   
   const server = http.createServer(app);
   const { socketConnection, sendMessage, getRooms, emitMessage } = require('./utils/socket-io');
-  socketConnection(server);
+  const io = socketConnection(server);
 
   // JS 
-  require('./utils/ratingSystem');
   // importing Middlewares
   app.use('/api/auth', authRoutes);
   app.use('/api/judge', judgeRoutes);
   app.use('/api/problem', problemRoutes);
   app.use('/api/contest', contestRoutes);
   app.use('/api/submission', submissionnRoutes);
+  app.use('/api/user', userRoutes);
   // console.log(`Worker ${process.pid} started`);
   app.post("/test",(req,res)=>{
     console.log(req);

@@ -11,11 +11,12 @@ async function isProblemAvailable(req, res) {
       }
 
       if (moment().isBefore(existingProblem.contest.startTime)) {
-        return reject({ status: 403, message: "Problem is not available yet" });
+        return reject({ status: 403, message: "Problem is not available yet"});
       }
 
       return resolve();
     } catch (error) {
+      console.error(error);
       return reject({ status: 500, message: "Internal Server Error" });
     }
   });

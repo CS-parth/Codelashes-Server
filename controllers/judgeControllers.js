@@ -12,6 +12,7 @@ const { Testcase } = require('../models/Testcase');
 const { fetchFileFromFirebase } = require("../config/firebase");
 const {emitMessage,sendMessage, getRooms} = require("../utils/socket-io");
 const Contest = require('../models/Contest');
+const moment = require('moment');
 const connection = {
   host: '127.0.0.1',
   port: '6379'
@@ -30,9 +31,9 @@ const executionWorker = new Worker('execution-queue', async (job) => {
   }
   const newSubmission = new Submission({username,contest,problem,code,language:"C"});
   
-  const contestId = req.body.contest;
+  const contestId = contest;
   const existingContest = await Contest.findById(contestId);
-  const contestEndTime = moment(existingContest.startTime).add(existingContest.duration, 'minutes');
+  const contestEndTime = moment(existingContest.startTime,"ddd MMM DD YYYY HH:mm:ss Z+HHmm").add(existingContest.duration, 'minutes');
   if (moment().isBefore(contestEndTime) && moment().isAfter(existingContest.startTime)) {
     newSubmission.isRated = true;
   } else {
@@ -54,7 +55,13 @@ const executionWorker = new Worker('execution-queue', async (job) => {
 
   
     compilationTimeStart = Date.now();
-    await spawnPromise('gcc', [`sandbox/${fileName}.c`, '-static', '-static-libgcc', '-static-libstdc++', '-o', `sandbox/${fileName}`]);
+    try{
+      await spawnPromise('gcc', [`sandbox/${fileName}.c`, '-static', '-static-libgcc', '-static-libstdc++', '-o', `sandbox/${fileName}`]);
+    }catch(err){
+      const finalVerdict = "Compilation Error";
+      const compilationTime = -1;
+      return { message: 'Error in Compilation', compilationTime, finalVerdict, roomId };
+    }
     compilationTimeEnd = Date.now();
     compilationTime = (compilationTimeEnd - compilationTimeStart) / 1000;
     console.log("Compilation Time:", compilationTime);
@@ -109,7 +116,9 @@ const executionWorker = new Worker('execution-queue', async (job) => {
 
 executionWorker.on('completed', (job, result) => {
   sendMessage(result.roomId,"verdict",result);
-  console.log(`Job ${job.id} completed successfully with result:`, result);
+  setTimeout(()=>{
+    console.log(`Job ${job.id} completed successfully with result:`, result);
+  },1000);
 });
 executionWorker.on('failed', (job, err) => {
   console.error(`Job ${job.id} failed with error: ${err.message}`);

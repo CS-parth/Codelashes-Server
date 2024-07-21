@@ -6,9 +6,12 @@ class Middleware{
             let lstSatus = 500;
             for(let idx = 0;idx < middlewareArr.length;idx++){
                 try{
+                    // console.log(middlewareArr[idx]);
                     await middlewareArr[idx](req,res);
+                    // console.log("Promise resolved");
                     return next();
                 }catch(error){
+                    // console.log("Promise rejected");
                     lstError = error.err;
                     lstSatus = error.status;
                 }
@@ -24,11 +27,25 @@ class Middleware{
                     await middlewareArr[idx](req,res);
                     continue;
                 }catch(error){
-                    return res.status(error.status || 500).json({message:error.status || "Internal Server Error"});
+                    return res.status(error.status || 500).json({message:error.message || "Internal Server Error"});
                 }
             }
             // If we never gets err
             return next();
+        }
+    }
+    getAndPromise(middlewareArr){
+        return async (req,res)=>{
+            for(let idx = 0;idx < middlewareArr.length;idx++){
+                try{
+                    await middlewareArr[idx](req,res);
+                    continue;
+                }catch(error){
+                    return Promise.reject({status:error.status || 500,message:error.message || "Internal Server Error"});
+                }
+            }
+            // If we never gets err
+            return Promise.resolve();
         }
     }
     single(middleware){
@@ -37,7 +54,7 @@ class Middleware{
                 await middleware(req,res);
                 next();
             }catch(error){
-                return res.status(error.status || 500).json({message:error.status || "Internal Server Error"});
+                return res.status(error.status || 500).json({message:error.message || "Internal Server Error"});
             }
         }
     }

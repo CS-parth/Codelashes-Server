@@ -6,15 +6,15 @@ const isLead = (req,res) => {
         try{
             const User = await Validation.getUser(req.cookies.jwt);
             if(User === null){
-                return reject({status: 400, err: "User not found"});
+                return reject({status: 400, message: "User not found"});
             }
             if(User.role == process.env.LEAD){
                 resolve();
             }else{
-                return reject({status:403,err: "Unautharized User"});
+                return reject({status:403,message: "Unautharized User"});
             }
         }catch(err){
-            return reject({status:500,err:"Internal Server Error"});
+            return reject({status:500,message:"Internal Server Error"});
         }
     })
 }

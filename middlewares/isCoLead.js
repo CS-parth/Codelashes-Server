@@ -6,15 +6,15 @@ const isCoLead = (req,res) => {
         try{
             const User = await Validation.getUser(req.cookies.jwt);
             if(User === null){
-                return reject({status: 400,err: "User not found"});
+                return reject({status: 400,message: "User not found"});
             }
             if(User.role == process.env.COLEAD){
                 resolve();
             }else{
-                return reject({status: 400,err: "Unautharized User"});
+                return reject({status: 400,message: "Unautharized User"});
             }
         }catch(err){
-            return reject({status:400,err:"Internal Server Error"});
+            return reject({status:400,message:"Internal Server Error"});
         }
     })
 }

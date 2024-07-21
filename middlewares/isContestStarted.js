@@ -1,7 +1,7 @@
 const moment = require('moment');
 const Contest = require('../models/Contest');
 
-async function isContestStarted(req, res) {
+function isContestStarted(req, res) {
   return new Promise(async (resolve, reject) => {
     try {
       const { id } = req.params;
@@ -11,14 +11,14 @@ async function isContestStarted(req, res) {
       }
 
       const [hours, minutes] = existingContest.startTime.split(':').map(Number);
-      const contestStartTime = moment(existingContest.startDate).set({ hours, minutes, seconds: 0 });
+      const contestStartTime = moment(existingContest.startDate,"ddd MMM DD YYYY HH:mm:ss Z+HHmm").set({ hours, minutes, seconds: 0 });
 
       if (moment().isBefore(moment(contestStartTime))) {
         return reject({ status: 403, message: "Contest not started yet" });
       }
-
       return resolve();
     } catch (error) {
+      console.error(error);
       return reject({ status: 500, message: "Internal Server Error" });
     }
   });

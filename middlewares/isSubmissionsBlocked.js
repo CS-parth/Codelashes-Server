@@ -9,7 +9,7 @@ function isSubmissionsBlocked(req, res){
         }
         resolve();
       }catch(err){
-        reject({status:500,err:"Internal Server Error"});
+        reject({status:500,message:"Internal Server Error"});
       }
     })
 }

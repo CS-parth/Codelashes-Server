@@ -1,7 +1,7 @@
 const validation = require("../utils/Validation");
 const Validation = new validation();
 
-const isProblemSetter = async (req, res) => {
+const isProblemSetter = (req, res) => {
   return new Promise(async (resolve, reject) => {
     try {
       const User = await Validation.getUser(req.cookies.jwt);
