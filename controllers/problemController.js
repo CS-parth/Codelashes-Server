@@ -133,8 +133,11 @@ exports.getProblemList = async (req, res) => {
             if(!problem.contest) return true;
             
             const contestEndTime = moment(problem.contest.endDate,"ddd MMM DD YYYY HH:mm:ss Z+HHmm");
-            
-            return moment().isAfter(contestEndTime);
+            console.log(contestEndTime);
+            console.log(moment());
+            // console.log(moment.utc("ddd MMM DD YYYY HH:mm:ss Z+HHmm").isAfter(contestEndTime));
+            // if(moment().isAfter(contestEndTime)) return true;
+            return moment.utc("ddd MMM DD YYYY HH:mm:ss Z+HHmm").isAfter(contestEndTime);
         })
         res.status(200).json(filteredProblems);
     } catch (error) {

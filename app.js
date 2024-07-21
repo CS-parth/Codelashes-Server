@@ -13,6 +13,8 @@ const {Server} = require('socket.io');
 // .env config
 dotenv.config();
 
+const calculateRatings = require("./utils/ratingSystem");
+
 // importing Routes
 const authRoutes = require("./routes/authRoutes");
 const judgeRoutes = require("./routes/judgeRoutes");
@@ -61,15 +63,7 @@ stablishConnection();
   app.use('/api/submission', submissionnRoutes);
   app.use('/api/user', userRoutes);
   // console.log(`Worker ${process.pid} started`);
-  app.post("/test",(req,res)=>{
-    console.log(req);
-    try{
-      res.cookie("test","value"); // From Server End there is no error
-      res.status(201).json({message: "Cookie Created Successfully"});
-    }catch(err){
-      res.status(500).send(err);
-    }
-  })
+  console.log(calculateRatings("669d076e2edae0a1468d4a63"));
   server.listen(port, () => {
     process.stdout.write(`Server is up and running on ${port}\n`);
   });

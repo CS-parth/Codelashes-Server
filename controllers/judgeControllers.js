@@ -33,8 +33,12 @@ const executionWorker = new Worker('execution-queue', async (job) => {
   
   const contestId = contest;
   const existingContest = await Contest.findById(contestId);
-  const contestEndTime = moment(existingContest.startTime,"ddd MMM DD YYYY HH:mm:ss Z+HHmm").add(existingContest.duration, 'minutes');
-  if (moment().isBefore(contestEndTime) && moment().isAfter(existingContest.startTime)) {
+  const contestEndTime = moment(existingContest.endDate,"ddd MMM DD YYYY HH:mm:ss Z+HHmm");
+  const contestStartTime = moment(existingContest.startDate,"ddd MMM DD YYYY HH:mm:ss Z+HHmm");
+  console.log(moment());
+  console.log(contestEndTime);
+  console.log(contestStartTime);
+  if (moment().isBefore(contestEndTime) && moment().isAfter(contestStartTime)){
     newSubmission.isRated = true;
   } else {
     newSubmission.isRated = false;
