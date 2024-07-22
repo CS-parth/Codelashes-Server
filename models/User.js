@@ -1,11 +1,14 @@
 const mongoose = require('mongoose');
-const passport = require('passport');
+
 
 const UserSchema = mongoose.Schema({
     username: String,
     email: String,
     password: String,
-    rating: Number
+    rating: {type:Number,default:0},
+    role: { type: String, required: true}
 });
 
-module.exports = mongoose.model('User',UserSchema);
+const User = mongoose.model('User',UserSchema);
+
+module.exports = User;

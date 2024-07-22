@@ -13,12 +13,16 @@ const {Server} = require('socket.io');
 // .env config
 dotenv.config();
 
+const ratingSystem = require('./utils/ratingSystem');
+
 // importing Routes
 const authRoutes = require("./routes/authRoutes");
 const judgeRoutes = require("./routes/judgeRoutes");
 const problemRoutes = require("./routes/problemRoutes");
 const contestRoutes = require("./routes/contestRoutes");
 const submissionnRoutes = require("./routes/submissionRoutes");
+const userRoutes = require('./routes/userRoutes');
+const resultRoutes = require('./routes/resultRoutes');
 // establishing the mongoose connection
 const stablishConnection = require("./db/connection");
 //Stablising the connection
@@ -37,28 +41,31 @@ stablishConnection();
 //   });
 // } else {
   // Express Configuration
-  app.use(cors());
   app.use(require('express-status-monitor')());
   const port = process.env.PORT || 7700;
-  app.use(cors());
+  app.use(cors({
+    origin: ["http://localhost:5173","http://localhost:5174"],
+    credentials: true
+  }));
   app.use(cookieParser());
   app.use(express.urlencoded({ extended: false }));
   app.use(express.json());
   
   const server = http.createServer(app);
   const { socketConnection, sendMessage, getRooms, emitMessage } = require('./utils/socket-io');
-  socketConnection(server);
+  const io = socketConnection(server);
 
   // JS 
-  require('./utils/ratingSystem');
   // importing Middlewares
   app.use('/api/auth', authRoutes);
   app.use('/api/judge', judgeRoutes);
   app.use('/api/problem', problemRoutes);
   app.use('/api/contest', contestRoutes);
   app.use('/api/submission', submissionnRoutes);
-  console.log(`Worker ${process.pid} started`);
-
+  app.use('/api/user', userRoutes);
+  app.use('/api/result', resultRoutes);
+  // console.log(`Worker ${process.pid} started`);
+  // console.log(new ratingSystem().calculateRatings("669d076e2edae0a1468d4a63"));
   server.listen(port, () => {
     process.stdout.write(`Server is up and running on ${port}\n`);
   });

@@ -1,0 +1,58 @@
+{
+    "roles": [
+      {
+        "name": "lead",
+        "permissions": [
+            "delete_user",
+            "update_user",
+            "ban_user",
+            "create_contest",
+            "delete_contest",
+            "update_contest",
+            "view_contest",
+            "create_blog",
+            "delete_blog",
+            "update_blog",
+            "create_problem",
+            "update_problem",
+            "delete_problem",
+            "view_problem"
+        ]
+      },
+      {
+        "name": "co_lead",
+        "permissions": [
+            "create_contest",
+            "delete_contest",
+            "update_contest",
+            "view_contest",
+            "create_blog",
+            "delete_blog",
+            "update_blog",
+            "create_problem",
+            "update_problem",
+            "delete_problem",
+            "view_problem"
+        ]
+      },
+      {
+        "name": "problem_setter",
+        "permissions": [
+            "create_blog",
+            "delete_blog",
+            "update_blog",
+            "view_contest",
+            "create_problem",
+            "update_problem",
+            "delete_problem",
+            "view_problem"
+        ]
+      },
+      {
+        "name": "participant",
+        "permissions": [
+            "update_user"
+        ]
+      }
+    ]
+}
