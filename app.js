@@ -13,7 +13,7 @@ const {Server} = require('socket.io');
 // .env config
 dotenv.config();
 
-const calculateRatings = require("./utils/ratingSystem");
+const ratingSystem = require('./utils/ratingSystem');
 
 // importing Routes
 const authRoutes = require("./routes/authRoutes");
@@ -22,6 +22,7 @@ const problemRoutes = require("./routes/problemRoutes");
 const contestRoutes = require("./routes/contestRoutes");
 const submissionnRoutes = require("./routes/submissionRoutes");
 const userRoutes = require('./routes/userRoutes');
+const resultRoutes = require('./routes/resultRoutes');
 // establishing the mongoose connection
 const stablishConnection = require("./db/connection");
 //Stablising the connection
@@ -62,8 +63,9 @@ stablishConnection();
   app.use('/api/contest', contestRoutes);
   app.use('/api/submission', submissionnRoutes);
   app.use('/api/user', userRoutes);
+  app.use('/api/result', resultRoutes);
   // console.log(`Worker ${process.pid} started`);
-  console.log(calculateRatings("669d076e2edae0a1468d4a63"));
+  // console.log(new ratingSystem().calculateRatings("669d076e2edae0a1468d4a63"));
   server.listen(port, () => {
     process.stdout.write(`Server is up and running on ${port}\n`);
   });

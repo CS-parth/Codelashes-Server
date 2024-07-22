@@ -65,9 +65,9 @@ exports.Signup = (req,res) => {
         }else if(role == process.env.PROBLEM_SETTER){
           newUser = new ProblemSetter({username,email,password,role});
         }else{
+          console.log("User created with participant role");
           newUser = new Participant({username,email,password,role:"participant"});
         }
-
         // Hash the password before saving
         bcrypt.genSalt(10, (err, salt) => {
           bcrypt.hash(newUser.password, salt, (err, hash) => {

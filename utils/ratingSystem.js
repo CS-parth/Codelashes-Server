@@ -6,14 +6,10 @@ const Problem = require('../models/Problem');
 const User = require('../models/User');
 const {blockedContests}= require("../middlewares/isSubmissionsBlocked");
 
-async function calculateRatings(contestId) {
+class ratingSystem{
+  constructor(){};
   
-  const contest = await Contest.findById(contestId);
-  const [hour,minute] = contest.duration.split(":").map(Number);
-  const contestDuration = hour*60*60 + minute*60;
-  blockSubmissions(contestId);
- 
-  async function getDistinctUsernamesForContest(contestId) {
+  async getDistinctUsernamesForContest(contestId) {
     try {
       const distinctUsernames = await Submission.aggregate([
         {
@@ -36,95 +32,102 @@ async function calculateRatings(contestId) {
       console.error('Error fetching distinct usernames:', error);
     }
   }
-
-  const allParticipants = await getDistinctUsernamesForContest(contestId); // get all the participants that have participated in contest (ie : alteast one submission in the contest)
   
-  console.log("Different Participants ", allParticipants);
-
-  let Performance = new Map();
+  blockSubmissions(contestId) {
+    blockedContests.set(contestId, true);
+    for(let [key,value] of blockedContests){
+      console.log(key);
+    }
+  }
   
-  for(let idx = 0;idx < allParticipants.length;idx++){
-    const participant = allParticipants[idx];
-      if(participant){
-        console.log(participant);
-        const submissions = await Submission.aggregate([
-          {
-            '$match': {
-              'contest': new mongoose.Types.ObjectId(contestId), 
-              'isRated': true, 
-              'username': participant
-            }
-          }, {
-            '$sort': {
-              'createdAt': 1
-            }
-          }, {
-            '$group': {
-              '_id': '$problem', 
-              'submissions': {
-                '$push': '$$ROOT'
-              }
-            }
-          }, {
-            '$project': {
-              'submissions': {
-                '$let': {
-                  'vars': {
-                    'acceptedIndex': {
-                      '$indexOfArray': [
-                        {
-                          '$map': {
-                            'input': '$submissions', 
-                            'as': 'sub', 
-                            'in': '$$sub.verdict'
-                          }
-                        }, 'Accepted'
-                      ]
-                    }
+  unblockSubmissions(contestId) {
+    blockedContests.delete(contestId);
+    for(let [key,value] of blockedContests){
+      console.log(key);
+    }
+  }
+
+  async getSubmissions(contestId,participant) {
+    const submissions = await Submission.aggregate([
+      {
+        '$match': {
+          'contest': new mongoose.Types.ObjectId(contestId), 
+          'isRated': true, 
+          'username': participant
+        }
+      }, {
+        '$sort': {
+          'createdAt': 1
+        }
+      }, {
+        '$group': {
+          '_id': '$problem', 
+          'submissions': {
+            '$push': '$$ROOT'
+          }
+        }
+      }, {
+        '$project': {
+          'submissions': {
+            '$let': {
+              'vars': {
+                'acceptedIndex': {
+                  '$indexOfArray': [
+                    {
+                      '$map': {
+                        'input': '$submissions', 
+                        'as': 'sub', 
+                        'in': '$$sub.verdict'
+                      }
+                    }, 'Accepted'
+                  ]
+                }
+              }, 
+              'in': {
+                '$cond': {
+                  'if': {
+                    '$gte': [
+                      '$$acceptedIndex', 0
+                    ]
                   }, 
-                  'in': {
-                    '$cond': {
-                      'if': {
-                        '$gte': [
-                          '$$acceptedIndex', 0
+                  'then': {
+                    '$slice': [
+                      '$submissions', {
+                        '$add': [
+                          '$$acceptedIndex', 1
                         ]
-                      }, 
-                      'then': {
-                        '$slice': [
-                          '$submissions', {
-                            '$add': [
-                              '$$acceptedIndex', 1
-                            ]
-                          }
-                        ]
-                      }, 
-                      'else': '$submissions'
-                    }
-                  }
+                      }
+                    ]
+                  }, 
+                  'else': '$submissions'
                 }
               }
             }
-          }, {
-            '$unwind': '$submissions'
-          }, {
-            '$replaceRoot': {
-              'newRoot': '$submissions'
-            }
-          }, {
-            '$sort': {
-              'createdAt': 1
-            }
           }
-        ]);
-        // console.log("Submission ",submissions);
+        }
+      }, {
+        '$unwind': '$submissions'
+      }, {
+        '$replaceRoot': {
+          'newRoot': '$submissions'
+        }
+      }, {
+        '$sort': {
+          'createdAt': 1
+        }
+      }
+    ]);
+    return submissions;
+  }
+
+  async getPerformaceMesure(contest,participant,submissions){
+        console.log(submissions);
         let PerformanceMeasure = 0;
         let Times = new Map();
         let isAccepted = new Map();
         for (let j = 0; j < submissions.length; j++) {
           const submission = submissions[j];
           const problem = submission.problem.toString(); // every object is differently referenced even having the same value so convert it so string for comparitions
-        
-          // console.log(`Submission #${j}: `, submission);
         
           if (!Times.has(problem)) { // has use Same-Value-Zero Algorithim
             Times.set(problem, 0);
@@ -134,26 +137,22 @@ async function calculateRatings(contestId) {
         
           if (submission.verdict === "Accepted") {
             isAccepted.set(problem,true);
-            const time = moment(submission.createdAt, "ddd MMM DD YYYY HH:mm:ss Z+HHmm")
-              .diff(moment(contest.startDate, "ddd MMM DD YYYY HH:mm:ss Z+HHmm"), 'seconds');
+            const time = moment(submission.createdAt, "ddd MMM DD YYYY HH:mm:ss Z+HHmm").diff(moment(contest.startDate, "ddd MMM DD YYYY HH:mm:ss Z+HHmm"), 'seconds');
+            console.log(time);
             t += time;
             console.log(`Accepted Submission. Time added: ${time}. New Total Time for problem ${problem}: ${t}`);
           } else {
-            t += 100; 
-            console.log(`Wrong Submission. Penalty added: 20. New Total Time for problem ${problem}: ${t}`);
+            t += 300; 
+            console.log(`Wrong Submission. Penalty added: 5 min. New Total Time for problem ${problem}: ${t}`);
           }
           
           Times.set(problem, t);  
         }
-        // For those who did not submitted the correct answer add the contest Time to it
         for(let j = 0;j < submissions.length;j++){
           const submission = submissions[j];
           const problem = submission.problem.toString();
           if(!isAccepted.has(problem)) {
-            // console.log(problem + "Do not have any Accepted Solution");
-            let t = Times.get(problem);
-            t += contestDuration;
-            Times.set(problem,t);
+            Times.delete(problem);
           }
         }
         for (let [problem, time] of Times) {
@@ -163,86 +162,149 @@ async function calculateRatings(contestId) {
           const p = await Problem.findById(problem);
           console.log("time",Times.get(problem));
           PerformanceMeasure += (p.difficulty/time);
-          // console.log(PerformanceMeasure);
         }
-        Performance.set(participant,PerformanceMeasure);  
+        console.log("Returning", PerformanceMeasure);
+        return PerformanceMeasure;
+  }
+
+  async getActualRanking(contestId){ // returning a Map of Rating
+    const contest = await Contest.findById(contestId);
+    const allParticipants = await this.getDistinctUsernamesForContest(contestId);
+    let Performance = new Map();
+    // console.log(allParticipants);
+    for(let idx = 0;idx < allParticipants.length;idx++){
+      const participant = allParticipants[idx];
+        if(participant){
+          console.log(participant);
+          const submissions = await this.getSubmissions(contestId,participant);
+          // console.log("Submission ",submissions);
+          let PerformanceMeasure = await this.getPerformaceMesure(contest,participant,submissions);
+          Performance.set(participant,PerformanceMeasure);  
+        }
+     }
+
+     const sortedPerformance = new Map([...Performance.entries()].sort((a, b) => b[1] - a[1])); // for actual Rank
+
+     let ActualRank = new Map();
+     
+     let rank = 0;
+     let prevValue = -1;
+     for (let [key, value] of sortedPerformance) {
+        if(value !== prevValue){
+            rank++;
+            prevValue = value;
+        }
+        ActualRank.set(key,rank);
+     }
+
+     return ActualRank;
+  }
+
+  async getExpectedRanking(contestId){ // returning a Map of Rating
+    const allParticipants = await this.getDistinctUsernamesForContest(contestId);
+    let Rating = new Map();
+    
+    for(let idx = 0;idx < allParticipants.length;idx++){
+      const participant = allParticipants[idx];
+      if(participant){
+        const user = await User.find({username:participant});
+        Rating.set(participant,user.rating | 0);
       }
-   }
-  
-  
-  console.log(Performance);
-
-  let Rating = new Map();
-  
-  for(let idx = 0;idx < allParticipants.length;idx++){
-    const participant = allParticipants[idx];
-    if(participant){
-      const user = await User.find({username:participant});
-      Rating.set(participant,user.rating | 0);
     }
-  }
 
-  
-  const sortedPerformance = new Map([...Performance.entries()].sort((a, b) => b[1] - a[1])); // for actual Rank
-  const sortedRating = new Map([...Rating.entries()].sort((a, b) => b[1] - a[1])); // for expected Rank
-  
+     const sortedRating = new Map([...Rating.entries()].sort((a, b) => b[1] - a[1])); // for expected Rank
 
-  let ExpectedRank = new Map();
-  let ActualRank = new Map();
-  
-  let rank = 1;
-  for (let [key, value] of sortedPerformance) {
-    ActualRank[key] = rank++;
-  }
-  console.log("ActualRank",ActualRank);
-  rank = 1;
-  for (let [key, value] of sortedRating) {
-    ExpectedRank[key] = rank++;
-  }
-  console.log("ExpectedRank",ExpectedRank);
-  let deltaRating = new Map();
-  let K = 10;
-  
-  for(let j = 0;j < allParticipants.length;j++){
-    const participant = allParticipants[j];
-    if(participant){
-      deltaRating[participant] = K*(ActualRank[participant] - ExpectedRank[participant]);
-    }
-  }
-  
-  // update Ratings 
-  for(let j = 0;j < allParticipants.length;j++){
-    const participant = allParticipants[j];
-    const user = await User.find({username:participant})[0];
-    // user = user[0];
-    if(user){
-      // console.log(deltaRating[participant]);
-      if(deltaRating[participant]){
-        user.rating += deltaRating[participant];
+     let ExpectedRank = new Map();
+      
+      let rank = 0;
+      let prevValue = -1;
+      for (let [key, value] of sortedRating) {
+        if(prevValue !== value) {
+          rank++;
+          prevValue = value;
+        }
+        ExpectedRank.set(key,rank);
       }
-      user.markModified("rating");
-      await user.save();
+      
+      return ExpectedRank;
+  }
+
+  async calculateRatings(contestId) {
+    
+    const allParticipants = await this.getDistinctUsernamesForContest(contestId);
+
+    let ExpectedRank = await this.getExpectedRanking(contestId);
+    let ActualRank = await this.getActualRanking(contestId);
+
+    let deltaRating = new Map();
+    let K = 10;
+    
+    for(let j = 0;j < allParticipants.length;j++){
+      const participant = allParticipants[j];
+      if(participant){
+        console.log(K*(ExpectedRank.get(participant) - ActualRank.get(participant)));
+        deltaRating.set(participant,K*(ExpectedRank.get(participant) - ActualRank.get(participant)));
+      }
     }
-  }
+    
+    console.log(deltaRating);
+    // update Ratings 
+    for (const participant of allParticipants) {
+      try {
+        const user = await User.findOne({ username: participant });
+        console.log(user);
+        if (user && deltaRating.has(participant)) {
+          if(user.rating === undefined) user.rating = 0;
+          user.rating += deltaRating.get(participant);
+          user.markModified("rating");
+          await user.save();
+        }
+      } catch (error) {
+        console.error(`Error updating rating for user ${participant}:`, error);
+      }
+    }
+    
+    // console.log(Rating);
   
-  console.log(Rating);
+    this.unblockSubmissions(contestId);
+  }
 
-  unblockSubmissions(contestId);
-}
-
-function blockSubmissions(contestId) {
-  blockedContests.set(contestId, true);
-  for(let [key,value] of blockedContests){
-    console.log(key);
+  async getLeaderBoard(contestId) {
+    const allParticipants = await this.getDistinctUsernamesForContest(contestId);
+    const LeaderBoard = [];
+    const ActualRanking = await this.getActualRanking(contestId);
+    const contest = await Contest.findById(contestId,'problems');
+                                //  .populate('problems');
+    const problemNumber = new Map();
+    const problemObj = {};
+    
+    for (let i = 0; i < contest.problems.length; i++) {
+      const problem = contest.problems[i].toString();
+      problemNumber.set(problem, i);
+      
+      const letterKey = String.fromCharCode("A".charCodeAt(0) + i);
+      problemObj[letterKey] = false;
+    }
+    const problems = contest.problem;
+    for(let i = 0;i < allParticipants.length;i++){
+      const participant = allParticipants[i];
+      let obj = {
+        ...problemObj,
+        username: participant,
+        ranking: ActualRanking.get(participant)
+      }
+      // obj.problem = true for all the accepted solution with israted flag
+      const acceptedSubmissions = await Submission.find({username:participant,isRated:true,verdict:"Accepted",contest:contestId});
+      for(let i = 0;i < acceptedSubmissions.length;i++){
+          const problem = acceptedSubmissions[i].problem.toString();
+          const idx = problemNumber.get(problem);
+          const letterKey = String.fromCharCode("A".charCodeAt(0) + idx);
+          obj[letterKey] = true;
+      }
+      LeaderBoard.push(obj);
+    }
+    return LeaderBoard;
   }
 }
 
-function unblockSubmissions(contestId) {
-  blockedContests.delete(contestId);
-  for(let [key,value] of blockedContests){
-    console.log(key);
-  }
-}
-
-module.exports = calculateRatings;
-// calculateRatings("668bce473136ded82a520040");
+module.exports = ratingSystem;

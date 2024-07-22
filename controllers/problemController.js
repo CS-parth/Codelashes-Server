@@ -7,6 +7,7 @@ const { promises: fs } = require('fs');
 const path = require('path');
 const util = require('util');
 const moment = require('moment');
+const Submission = require("../models/Submission");
 const extractZip = (filepath,outputpath) => {
     return new Promise((resolve,reject)=>{
         const zip = new AdmZip(filepath);
@@ -119,6 +120,8 @@ exports.getProblem = async (req, res) => {
 
 exports.getProblemList = async (req, res) => {
     try {
+        const { username } = req.query;
+        console.log(username);
         const allProblems = await Problem.find({},'_id number title acceptance difficulty contest')
                                          .populate({
                                             path: 'contest',
@@ -131,15 +134,32 @@ exports.getProblemList = async (req, res) => {
         }
         const filteredProblems = allProblems.filter((problem)=>{
             if(!problem.contest) return true;
-            
             const contestEndTime = moment(problem.contest.endDate,"ddd MMM DD YYYY HH:mm:ss Z+HHmm");
-            console.log(contestEndTime);
-            console.log(moment());
-            // console.log(moment.utc("ddd MMM DD YYYY HH:mm:ss Z+HHmm").isAfter(contestEndTime));
-            // if(moment().isAfter(contestEndTime)) return true;
-            return moment.utc("ddd MMM DD YYYY HH:mm:ss Z+HHmm").isAfter(contestEndTime);
+            if(moment().isAfter(contestEndTime)){
+                return true;
+            }
         })
-        res.status(200).json(filteredProblems);
+        let filteredProblemsWithStatus;
+        if(username){
+            filteredProblemsWithStatus = await Promise.all(filteredProblems.map(async (problem) => {
+                const isAccepted = await Submission.findOne({
+                    username: username, 
+                    verdict: "Accepted", 
+                    problem: problem._id
+                });
+                return {
+                    ...problem,
+                    status: isAccepted ? "solved" : "attempted"
+                };
+            }));
+            const result = filteredProblemsWithStatus.map(problem => ({
+                ...problem._doc,
+                status: problem.status
+            }));
+            filteredProblemsWithStatus = result;
+        }
+        console.log(filteredProblemsWithStatus);
+        res.status(200).json(filteredProblemsWithStatus);
     } catch (error) {
         console.error('Error retrieving problem:', error);
         res.status(500).json({ message: "Internal server error" });

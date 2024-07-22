@@ -44,7 +44,8 @@ const ProblemSchema = new mongoose.Schema({
     contest: {
         type: mongoose.Schema.Types.ObjectId,
         ref:'Contest'
-    }
+    },
+    status: {type:String,default:"UnAttempted"}
 });
 
 ProblemSchema.post('save', async function(doc) {
