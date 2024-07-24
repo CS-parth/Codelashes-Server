@@ -15,8 +15,9 @@ router.post("/create",
             contestController.createContest);
 router.get("/all",contestController.getContestList);
 router.get("/meta/:id",contestController.getContestMeta);
+router.get("/managable",contestController.getManagable); // Query params 
+router.post("/edit/:id",contestController.editContest);
 router.get("/:id",
             Middleware.getOR([isLead,isProblemSetter,isCoLead,isContestStarted]),
             contestController.getContest);
-
 module.exports = router;

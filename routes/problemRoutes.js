@@ -15,10 +15,20 @@ router.post("/create", upload.fields([
 
 router.get("/all",problemController.getProblemList);
 
+router.get("/managable",problemController.getManagable)
+
+router.post("/edit/:id",upload.fields([
+              { name: 'testcase', maxCount: 1 },
+              { name: 'answer', maxCount: 1 }
+            ]),problemController.editProblem);
+
+router.post("/delete/:id",problemController.deleteProblem);
+
 router.get("/:id",
           Middleware.getOR([
           Middleware.getAndPromise([rbacMiddleware.execute("view_problem"),PDP.execute]),
           isProblemAvailable]),
           problemController.getProblem);
+
 
 module.exports = router;

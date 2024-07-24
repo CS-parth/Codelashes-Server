@@ -45,19 +45,43 @@ const ProblemSchema = new mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref:'Contest'
     },
+    setter: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref:'User'
+    },
     status: {type:String,default:"UnAttempted"}
 });
 
-ProblemSchema.post('save', async function(doc) {
+ProblemSchema.post('save', async function(doc,next) {
     try{
         // find the contest 
         const existingContest = await Contest.findById(doc.contest);
+        if(existingContest.problems.includes(doc._id)){
+            next();
+        }
         existingContest.problems.push(doc._id);
         await existingContest.save();
+        next();
     }catch(err){
         console.error(err);
     }
 });
+
+ProblemSchema.pre("findOneAndDelete", async function(next) {
+    try{
+        console.log(this._conditions._id);
+        const contest = await Contest.findOneAndUpdate({
+            problems: this._conditions._id
+        },{ 
+            $pull: {'problems': this._conditions._id}
+        },
+        {new:true});
+        console.log(contest);
+        next();
+    }catch(err){
+        console.error(err);
+    }
+  });
 
 const Problem = mongoose.model('Problem',ProblemSchema);
 

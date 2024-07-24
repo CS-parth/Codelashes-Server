@@ -4,7 +4,7 @@ const router = express.Router();
 const { isSubmissionsBlocked }= require("../middlewares/isSubmissionsBlocked");
 const middleware = require("../utils/Middleware");
 const Middleware = new middleware();
+
 router.post("/submit",Middleware.single(isSubmissionsBlocked),submitController);
-// router.post("/run",);
 
 module.exports = router;
