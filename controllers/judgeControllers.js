@@ -83,7 +83,7 @@ const executionWorker = new Worker('execution-queue', async (job) => {
     let finalVerdict = "";
     const processTestcases = async (array)=>{
       for(const testcase of array){
-        console.log(testcase);
+        // console.log(testcase);
         await fetchFileFromFirebase(testcase.data.url,`./sandbox/${jobId}_${testcase.data.access_token}.txt`);
         await fetchFileFromFirebase(testcase.answer.url,`./sandbox/${jobId}_${testcase.answer.access_token}.txt`);
         const { outputFilePath, stderr, verdict } = await runDockerWithTimeout(fileName, 5000, `./sandbox/${jobId}_${testcase.data.access_token}.txt`, `./sandbox/${jobId}_${testcase.answer.access_token}.txt`); // 5 seconds timeout
