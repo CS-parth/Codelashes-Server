@@ -10,6 +10,9 @@ const moment = require('moment');
 const Submission = require("../models/Submission");
 const Contest = require("../models/Contest");
 const User = require("../models/User");
+const validation = require("../utils/Validation");
+const Validation = new validation();
+
 const extractZip = (filepath,outputpath) => {
     return new Promise((resolve,reject)=>{
         const zip = new AdmZip(filepath);
@@ -22,6 +25,7 @@ const extractZip = (filepath,outputpath) => {
         })
     })
 }
+
 exports.createProblem = async (req,res) => {
 
     let testcaseUrls = [];
@@ -70,9 +74,9 @@ exports.createProblem = async (req,res) => {
                                         },
                                         problem: newProblem._id
                                     });
-                                    // console.log(newTestcase);
                                     return newTestcase.save();
                                 })
+
         await Promise.all(testcasePromises);
 
         // console.log(newProblem);
@@ -261,7 +265,9 @@ exports.getProblem = async (req, res) => {
 
 exports.getProblemList = async (req, res) => {
     try {
-        const { username } = req.query;
+        const token = req.cookies.jwt;
+        const user = await Validation.getUser(token);
+        const username = user.username;
         console.log(username);
         const allProblems = await Problem.find({},'_id number title acceptance difficulty contest')
                                          .populate({
@@ -283,21 +289,51 @@ exports.getProblemList = async (req, res) => {
         let filteredProblemsWithStatus;
         if(username){
             filteredProblemsWithStatus = await Promise.all(filteredProblems.map(async (problem) => {
-                const isAccepted = await Submission.findOne({
+                const acceptedSubmission = await Submission.findOne({
                     username: username, 
                     verdict: "Accepted", 
                     problem: problem._id
                 });
+            
+                if (acceptedSubmission) {
+                    return {
+                        ...problem,
+                        status: "Solved"
+                    };
+                }
+            
+                const anySubmission = await Submission.findOne({
+                    username: username,
+                    problem: problem._id
+                });
+            
                 return {
                     ...problem,
-                    status: isAccepted ? "solved" : "attempted"
+                    status: anySubmission ? "Attempted" : "Unattempted"
                 };
             }));
-            const result = filteredProblemsWithStatus.map(problem => ({
+            
+            let result = filteredProblemsWithStatus.map(problem => ({
                 ...problem._doc,
                 status: problem.status
             }));
+            
             filteredProblemsWithStatus = result;
+        }
+        // Now use the queries to apply filter
+        const {status,difficulty,acceptance} = req.query;
+        if(status){
+            filteredProblemsWithStatus = filteredProblemsWithStatus.filter((problem)=>problem.status==status);
+        }
+        if(difficulty){
+            filteredProblemsWithStatus = filteredProblemsWithStatus.filter((problem)=>problem.difficulty==difficulty);
+        }
+        if(acceptance){
+            if(acceptance == "lesser"){
+                filteredProblemsWithStatus = filteredProblemsWithStatus.filter((problem)=>problem.acceptance<=50);
+            }else{
+                filteredProblemsWithStatus = filteredProblemsWithStatus.filter((problem)=>problem.acceptance>50);
+            }
         }
         console.log(filteredProblemsWithStatus);
         res.status(200).json(filteredProblemsWithStatus);

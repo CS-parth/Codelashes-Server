@@ -36,6 +36,7 @@ const ProblemSchema = new mongoose.Schema({
     },
     acceptance : {
         type: Number,
+        default: 0
     },
     difficulty : {
         type: Number,
@@ -49,7 +50,7 @@ const ProblemSchema = new mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref:'User'
     },
-    status: {type:String,default:"UnAttempted"}
+    status: {type:String,default:"Unattempted"}
 });
 
 ProblemSchema.post('save', async function(doc,next) {
