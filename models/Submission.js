@@ -29,6 +29,9 @@ const SubmissionSchema = new mongoose.Schema({
     type: [testcaseSchema], // result of the complete testcases
     required: true,
   },
+  failedTestcase: {
+    type:String,
+  },
   jobId: String,
   username: {
     type: String,

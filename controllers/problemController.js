@@ -11,8 +11,9 @@ const Submission = require("../models/Submission");
 const Contest = require("../models/Contest");
 const User = require("../models/User");
 const validation = require("../utils/Validation");
+const Editorial = require("../models/Editorial");
 const Validation = new validation();
-
+const ObjectId = require('mongodb').ObjectId;
 const extractZip = (filepath,outputpath) => {
     return new Promise((resolve,reject)=>{
         const zip = new AdmZip(filepath);
@@ -267,81 +268,70 @@ exports.getProblemList = async (req, res) => {
     try {
         const token = req.cookies.jwt;
         const user = await Validation.getUser(token);
-        const username = user.username;
-        console.log(username);
-        const allProblems = await Problem.find({},'_id number title acceptance difficulty contest')
-                                         .populate({
-                                            path: 'contest',
-                                            select: 'startDate endDate duration'
-                                         })
-                                         .exec();
-        
-        if (!allProblems) {
-            return res.status(404).json({ message: "No problems to pesent" });
+        const username = user?.username;
+
+        const allProblems = await Problem.find({}, '_id number title acceptance difficulty contest editorial')
+            .populate({
+                path: 'contest',
+                select: 'startDate endDate duration'
+            })
+            .lean()
+            .exec();
+
+        if (!allProblems.length) {
+            return res.status(404).json({ message: "No problems to present" });
         }
-        const filteredProblems = allProblems.filter((problem)=>{
-            if(!problem.contest) return true;
-            const contestEndTime = moment(problem.contest.endDate,"ddd MMM DD YYYY HH:mm:ss Z+HHmm");
-            if(moment().isAfter(contestEndTime)){
-                return true;
-            }
-        })
-        let filteredProblemsWithStatus;
-        if(username){
-            filteredProblemsWithStatus = await Promise.all(filteredProblems.map(async (problem) => {
-                const acceptedSubmission = await Submission.findOne({
-                    username: username, 
-                    verdict: "Accepted", 
-                    problem: problem._id
-                });
-            
-                if (acceptedSubmission) {
-                    return {
-                        ...problem,
-                        status: "Solved"
-                    };
+
+        const filteredProblems = allProblems.filter(problem => {
+            if (!problem.contest) return true;
+            const contestEndTime = moment(problem.contest.endDate, "ddd MMM DD YYYY HH:mm:ss Z+HHmm");
+            return moment().isAfter(contestEndTime);
+        });
+
+        let problemsWithStatus = filteredProblems;
+        if (username) {
+            const problemIds = filteredProblems.map(p => p._id);
+            const userSubmissions = await Submission.find({
+                username: username,
+                problem: { $in: problemIds }
+            }, 'problem verdict').lean();
+
+            const submissionMap = new Map();
+            userSubmissions.forEach(sub => {
+                if (!submissionMap.has(sub.problem.toString()) || sub.verdict === "Accepted") {
+                    submissionMap.set(sub.problem.toString(), sub.verdict);
                 }
-            
-                const anySubmission = await Submission.findOne({
-                    username: username,
-                    problem: problem._id
-                });
-            
-                return {
-                    ...problem,
-                    status: anySubmission ? "Attempted" : "Unattempted"
-                };
+            });
+            // console.log(filteredProblems);
+            problemsWithStatus = filteredProblems.map(problem => ({
+                ...problem,
+                status: submissionMap.get(problem._id.toString()) === "Accepted" ? "Solved" :
+                        submissionMap.has(problem._id.toString()) ? "Attempted" : "Unattempted"
             }));
-            
-            let result = filteredProblemsWithStatus.map(problem => ({
-                ...problem._doc,
-                status: problem.status
-            }));
-            
-            filteredProblemsWithStatus = result;
         }
-        // Now use the queries to apply filter
-        const {status,difficulty,acceptance} = req.query;
-        if(status){
-            filteredProblemsWithStatus = filteredProblemsWithStatus.filter((problem)=>problem.status==status);
+
+        // Apply filters
+        const { status, difficulty, acceptance } = req.query;
+        let filteredResults = problemsWithStatus;
+
+        if (status) {
+            filteredResults = filteredResults.filter(problem => problem.status === status);
         }
-        if(difficulty){
-            filteredProblemsWithStatus = filteredProblemsWithStatus.filter((problem)=>problem.difficulty==difficulty);
+        if (difficulty) {
+            filteredResults = filteredResults.filter(problem => problem.difficulty === difficulty);
         }
-        if(acceptance){
-            if(acceptance == "lesser"){
-                filteredProblemsWithStatus = filteredProblemsWithStatus.filter((problem)=>problem.acceptance<=50);
-            }else{
-                filteredProblemsWithStatus = filteredProblemsWithStatus.filter((problem)=>problem.acceptance>50);
-            }
+        if (acceptance) {
+            filteredResults = filteredResults.filter(problem => 
+                acceptance === "lesser" ? problem.acceptance <= 50 : problem.acceptance > 50
+            );
         }
-        console.log(filteredProblemsWithStatus);
-        res.status(200).json(filteredProblemsWithStatus);
+        // console.log(filteredResults);
+        res.status(200).json(filteredResults);
     } catch (error) {
-        console.error('Error retrieving problem:', error);
+        console.error('Error retrieving problems:', error);
         res.status(500).json({ message: "Internal server error" });
     }
-}
+};
 
 exports.getManagable = async (req,res)=>{
     try{
@@ -364,4 +354,64 @@ exports.getManagable = async (req,res)=>{
         console.log(err);
         return res.status(500).json({message: "Internal Server Error"});
     }   
+}
+
+exports.addEditorial = async (req,res) => {
+    try{
+        const {id} = req.params;
+        const {language,code,solution} = req.body;
+        console.log(solution);
+        console.log(id);
+        const existingEditorial = await Editorial.findOne({problem:id});
+        console.log(existingEditorial);
+        if(existingEditorial){
+           return res.status(403).json({message: "Editorial to this problem already exists"});
+        }
+        const newEditorial = new Editorial({language,code,solution,problem:id});
+        newEditorial.save();
+        console.log(newEditorial);
+        res.status(200).send(newEditorial);
+    }catch(err){
+        console.error(err);
+        res.status(500).json({message: "Internal Server Error"});
+    }
+}
+
+exports.getEditorial = async (req,res) => {
+    try{
+        const {id} = req.params;
+        const existingEditorial = await Editorial.findOne({problem:id});
+        if(!existingEditorial){
+           return res.status(404).json({message: "No Editorial Available"});
+        }
+        res.status(200).send(existingEditorial);
+    }catch(err){
+        console.error(err);
+        res.status(500).json({message: "Internal Server Error"});
+    }
+}
+
+exports.getProblemCount = async (req,res) =>{
+    try{
+        const token = req.cookies.jwt;
+        const decodedToken = await Validation.getUser(token);
+        const problemCount = await Submission.aggregate([
+            {
+              '$match': {
+                'username': `${decodedToken.username}`, 
+                'verdict': 'Accepted'
+              }
+            }, {
+              '$group': {
+                '_id': '$problem'
+              }
+            }, {
+              '$count': 'problemCount'
+            }
+          ]);
+        res.status(200).json(problemCount[0].problemCount);
+    }catch(err){
+        console.error(err);
+        res.status(500).json({message: "Internal Server Error"});
+    }
 }

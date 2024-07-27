@@ -1,5 +1,6 @@
 const Submission = require("../models/Submission");
-
+const validation = require("../utils/Validation");
+const Validation = new validation();
 exports.getContestMySubmissions = async (req, res) => {
     try {
         const { username, contest } = req.params;
@@ -26,5 +27,27 @@ exports.getContestAllSubmissions = async (req,res) => {
     }catch(err){
         console.error(err);
         res.status(500).json({"message": "Internal Server Error"});
+    }
+}
+
+exports.getProfileSubmission = async (req,res) => {
+    try{    
+        const token = req.cookies.jwt;
+        const user = await Validation.getUser(token);
+        const profileSubmissions = await Submission.aggregate([
+            {
+              '$match': {
+                'username': `${user.username}`
+              }
+            }, {
+              '$sort': {
+                'createdAt': -1
+              }
+            }
+          ]);
+        res.status(200).json(profileSubmissions);
+    }catch(err){
+        console.error(err);
+        res.status(500).json({message: "Internal Server Error"});
     }
 }

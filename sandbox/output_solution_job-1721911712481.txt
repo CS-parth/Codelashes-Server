@@ -1,0 +1,2 @@
+Executing binary inside the sandbox
+2000

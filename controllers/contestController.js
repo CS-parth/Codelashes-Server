@@ -6,6 +6,7 @@ const moment = require('moment');
 const { emitMessage } = require('../utils/socket-io');
 const calculateRatings = require("../utils/ratingSystem");
 const validation = require('../utils/Validation');
+const Submission = require('../models/Submission');
 const Validation = new validation();
 exports.createContest = async (req,res)=>{
     try{
@@ -163,6 +164,56 @@ exports.getManagable = async (req,res) => {
     }
 }
 
+exports.getProfileContest = async (req,res) => {
+    try{
+        const token = req.cookies.jwt;
+        const decodedToken = await Validation.getPayload(token);
+        const user = await User.findById(decodedToken.id,'rating');
+        const contestsByOrder = await Submission.aggregate([
+            {
+              '$match': {
+                'username': 'CSparth'
+              }
+            }, {
+              '$group': {
+                '_id': '$contest'
+              }
+            }, {
+              '$lookup': {
+                'from': 'contests', 
+                'localField': '_id', 
+                'foreignField': '_id', 
+                'as': 'result'
+              }
+            }, {
+              '$unwind': {
+                'path': '$result'
+              }
+            }, {
+              '$project': {
+                '_id': 1, 
+                'startTime': '$result.startTime',
+                'startDate': '$result.startDate',
+                'name': '$result.name'
+              }
+            }, {
+              '$sort': {
+                'startDate': -1
+              }
+            }
+          ]);
+        //   console.log(user);
+        const size = user.rating.length - 1;
+        const profileContests = contestsByOrder.map((contest,index)=>({
+            ...contest,
+            rating:user.rating[size-index]-(user.rating[size-index-1] || 0)
+        }))
+        res.status(200).json(profileContests);
+    }catch(err){
+        console.error(err);
+        res.status(500).json({message: "Internal Server Error"});
+    }
+}
 // const io = require('socket.io')(server);
 
 // // Example contest data

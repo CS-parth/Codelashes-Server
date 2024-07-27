@@ -4,5 +4,5 @@ const submissionController = require("../controllers/submissionController");
 
 router.get("/my/:username/:contest", submissionController.getContestMySubmissions);
 router.get("/all/:contest", submissionController.getContestAllSubmissions);
-
+router.get("/my", submissionController.getProfileSubmission);
 module.exports = router;

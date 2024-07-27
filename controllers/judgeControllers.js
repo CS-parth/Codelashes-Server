@@ -2,6 +2,7 @@ const { spawn } = require("child_process");
 const fs = require('fs');
 const util = require('util');
 const { Queue, Worker } = require('bullmq');
+const readFilePromise = util.promisify(fs.readFile);
 const writeFilePromise = util.promisify(fs.writeFile);
 const unlinkPromise = util.promisify(fs.unlink);
 const readLine = require('readline');
@@ -81,18 +82,27 @@ const executionWorker = new Worker('execution-queue', async (job) => {
     // const testcase = Testcases[0];
     let executionError = "";
     let finalVerdict = "";
+    let finalTestcase = "";
     const processTestcases = async (array)=>{
       for(const testcase of array){
+        let incorrectFlag = false;
         // console.log(testcase);
         await fetchFileFromFirebase(testcase.data.url,`./sandbox/${jobId}_${testcase.data.access_token}.txt`);
         await fetchFileFromFirebase(testcase.answer.url,`./sandbox/${jobId}_${testcase.answer.access_token}.txt`);
         const { outputFilePath, stderr, verdict } = await runDockerWithTimeout(fileName, 5000, `./sandbox/${jobId}_${testcase.data.access_token}.txt`, `./sandbox/${jobId}_${testcase.answer.access_token}.txt`); // 5 seconds timeout
         finalVerdict = verdict;
-        console.log(verdict);
+        if(finalVerdict != "Accepted"){
+          incorrectFlag = true;
+          const textcaseAsBuffer = await readFilePromise(`./sandbox/${jobId}_${testcase.data.access_token}.txt`);
+          for(let charCode of textcaseAsBuffer){
+            finalTestcase+=(String.fromCharCode(charCode));
+          }
+          console.log(finalTestcase);
+        }
         await unlinkPromise(outputFilePath).catch((err) => console.error("Cleanup error:", err));
         await unlinkPromise(`./sandbox/${jobId}_${testcase.data.access_token}.txt`).catch((err) => console.error("Cleanup error:", err));
         await unlinkPromise(`./sandbox/${jobId}_${testcase.answer.access_token}.txt`).catch((err) => console.error("Cleanup error:", err));
-        if(finalVerdict != "Accepted") break; 
+        if(incorrectFlag) break;
       }
     }
     await processTestcases(Testcases);
@@ -105,8 +115,9 @@ const executionWorker = new Worker('execution-queue', async (job) => {
     areFilesRemoved = false;
     newSubmission.verdict = finalVerdict;
     newSubmission.jobId = jobId;
+    newSubmission.failedTestcase = finalTestcase;
     newSubmission.save();
-    return { message: 'Successfully compiled and executed', compilationTime, finalVerdict, roomId };
+    return { message: 'Successfully compiled and executed', compilationTime, finalVerdict, roomId, finalTestcase };
 
   } catch (err) {
     console.error("Error:", err);

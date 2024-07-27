@@ -50,6 +50,10 @@ const ProblemSchema = new mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref:'User'
     },
+    editorial: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref:'Editorial'
+    },
     status: {type:String,default:"Unattempted"}
 });
 
