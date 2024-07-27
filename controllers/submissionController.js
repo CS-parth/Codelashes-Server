@@ -37,11 +37,31 @@ exports.getProfileSubmission = async (req,res) => {
         const profileSubmissions = await Submission.aggregate([
             {
               '$match': {
-                'username': `${user.username}`
+                'username': 'CSparth'
               }
             }, {
               '$sort': {
                 'createdAt': -1
+              }
+            }, {
+              '$lookup': {
+                'from': 'problems', 
+                'localField': 'problem', 
+                'foreignField': '_id', 
+                'as': 'result'
+              }
+            }, {
+              '$unwind': {
+                'path': '$result'
+              }
+            }, {
+              '$project': {
+                '_id': 1, 
+                'verdict': 1, 
+                'createdAt': 1, 
+                'pid': '$result._id',
+                'cid': '$result.contest',
+                'problemTitle': '$result.title'
               }
             }
           ]);

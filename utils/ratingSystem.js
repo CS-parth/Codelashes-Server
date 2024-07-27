@@ -255,7 +255,7 @@ class ratingSystem{
         console.log(user);
         if (user && deltaRating.has(participant)) {
           if(user.rating === undefined) user.rating = 0;
-          user.rating += deltaRating.get(participant);
+          user.rating.push(deltaRating.get(participant));
           user.markModified("rating");
           await user.save();
         }

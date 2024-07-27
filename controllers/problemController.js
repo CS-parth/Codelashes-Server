@@ -409,7 +409,7 @@ exports.getProblemCount = async (req,res) =>{
               '$count': 'problemCount'
             }
           ]);
-        res.status(200).json(problemCount[0].problemCount);
+        res.status(200).json(problemCount[0]?.problemCount || 0);
     }catch(err){
         console.error(err);
         res.status(500).json({message: "Internal Server Error"});
