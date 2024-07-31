@@ -246,13 +246,12 @@ exports.deleteProblem = async (req,res) => {
 exports.getProblem = async (req, res) => {
     try {
         const id = req.params.id;
-        
+    
         if (!id) {
             return res.status(400).json({ message: "Invalid problem ID" });
         }
 
         const existingProblem = await Problem.findById(id);
-        
         if (!existingProblem) {
             return res.status(404).json({ message: "Problem does not exist" });
         }
@@ -393,12 +392,11 @@ exports.getEditorial = async (req,res) => {
 
 exports.getProblemCount = async (req,res) =>{
     try{
-        const token = req.cookies.jwt;
-        const decodedToken = await Validation.getUser(token);
+        const { username } = req.query;
         const problemCount = await Submission.aggregate([
             {
               '$match': {
-                'username': `${decodedToken.username}`, 
+                'username': `${username}`, 
                 'verdict': 'Accepted'
               }
             }, {

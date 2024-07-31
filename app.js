@@ -22,6 +22,7 @@ const problemRoutes = require("./routes/problemRoutes");
 const contestRoutes = require("./routes/contestRoutes");
 const submissionnRoutes = require("./routes/submissionRoutes");
 const userRoutes = require('./routes/userRoutes');
+const blogRoutes = require('./routes/blogRoutes');
 const resultRoutes = require('./routes/resultRoutes');
 // establishing the mongoose connection
 const stablishConnection = require("./db/connection");
@@ -64,8 +65,9 @@ stablishConnection();
   app.use('/api/submission', submissionnRoutes);
   app.use('/api/user', userRoutes);
   app.use('/api/result', resultRoutes);
+  app.use('/api/blog',blogRoutes);
   // console.log(`Worker ${process.pid} started`);
-  // console.log(new ratingSystem().calculateRatings("669d076e2edae0a1468d4a63"));
+  console.log(new ratingSystem().calculateRatings("66aa8581808c710fef96ecf6"));
   server.listen(port, () => {
     process.stdout.write(`Server is up and running on ${port}\n`);
   });

@@ -28,11 +28,11 @@ router.post("/editorial/:id",problemController.addEditorial);
 router.get("/editorial/:id",problemController.getEditorial);
 
 router.get("/count",problemController.getProblemCount);
+
 router.get("/:id",
           Middleware.getOR([
           Middleware.getAndPromise([rbacMiddleware.execute("view_problem"),PDP.execute]),
           isProblemAvailable]),
           problemController.getProblem);
-
 
 module.exports = router;

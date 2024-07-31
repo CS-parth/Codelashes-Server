@@ -4,10 +4,12 @@ const mongoose = require('mongoose');
 const schedule = require('node-schedule');
 const moment = require('moment');
 const { emitMessage } = require('../utils/socket-io');
-const calculateRatings = require("../utils/ratingSystem");
+const ratingSystem = require("../utils/ratingSystem");
 const validation = require('../utils/Validation');
 const Submission = require('../models/Submission');
 const Validation = new validation();
+const RatingSystem = new ratingSystem();
+
 exports.createContest = async (req,res)=>{
     try{
         const {name,setters,startDate,startTime,duration,description,rules} = req.body;
@@ -166,13 +168,13 @@ exports.getManagable = async (req,res) => {
 
 exports.getProfileContest = async (req,res) => {
     try{
-        const token = req.cookies.jwt;
-        const decodedToken = await Validation.getPayload(token);
-        const user = await User.findById(decodedToken.id,'rating');
+        const {username} = req.query;
+        const user = await User.findOne({username:username},'rating');
+        // console.log(user);
         const contestsByOrder = await Submission.aggregate([
             {
               '$match': {
-                'username': 'CSparth'
+                'username': `${username}`
               }
             }, {
               '$group': {
@@ -201,8 +203,7 @@ exports.getProfileContest = async (req,res) => {
                 'startDate': -1
               }
             }
-          ]);
-        //   console.log(user);
+        ]);
         const size = user.rating.length - 1;
         const profileContests = contestsByOrder.map((contest,index)=>({
             ...contest,
@@ -229,7 +230,7 @@ function startContest(contestId) {
 function endContest(contestId) {
   emitMessage('contestEnded', { contestId });
   console.log(`Contest ${contestId} ended`);
-  calculateRatings(contestId);
+  RatingSystem.calculateRatings(contestId);
 }
 
 // function ratingCalculationComplete(contestId) {

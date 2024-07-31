@@ -33,7 +33,7 @@ class RBACMiddleware extends Middleware {
                   return Promise.reject({status: 403,message: "Access denied"});
               }
             }catch(err){
-              Promise.reject({status: 500,message: "Internal Server Error"});
+              return Promise.reject({status: 500,message: "Internal Server Error"});
             }
         };
     }

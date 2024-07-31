@@ -1,17 +1,15 @@
 class Middleware{
     constructor(){}
+    
     getOR(middlewareArr){
         return async (req,res,next)=>{ // async as we have to handle promises inside this func
             let lstError = null;
             let lstSatus = 500;
             for(let idx = 0;idx < middlewareArr.length;idx++){
                 try{
-                    // console.log(middlewareArr[idx]);
                     await middlewareArr[idx](req,res);
-                    // console.log("Promise resolved");
                     return next();
                 }catch(error){
-                    // console.log("Promise rejected");
                     lstError = error.err;
                     lstSatus = error.status;
                 }
@@ -20,6 +18,7 @@ class Middleware{
             return res.status(lstSatus).json({message: lstError});
         }
     }
+
     getAnd(middlewareArr){
         return async (req,res,next)=>{
             for(let idx = 0;idx < middlewareArr.length;idx++){
@@ -34,6 +33,7 @@ class Middleware{
             return next();
         }
     }
+
     getAndPromise(middlewareArr){
         return async (req,res)=>{
             for(let idx = 0;idx < middlewareArr.length;idx++){
@@ -48,6 +48,7 @@ class Middleware{
             return Promise.resolve();
         }
     }
+
     single(middleware){
         return async (req,res,next)=>{
             try{

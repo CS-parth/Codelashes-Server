@@ -142,7 +142,7 @@ class ratingSystem{
             t += time;
             console.log(`Accepted Submission. Time added: ${time}. New Total Time for problem ${problem}: ${t}`);
           } else {
-            t += 300; 
+            t += 600; 
             console.log(`Wrong Submission. Penalty added: 5 min. New Total Time for problem ${problem}: ${t}`);
           }
           
@@ -243,7 +243,7 @@ class ratingSystem{
       const participant = allParticipants[j];
       if(participant){
         console.log(K*(ExpectedRank.get(participant) - ActualRank.get(participant)));
-        deltaRating.set(participant,K*(ExpectedRank.get(participant) - ActualRank.get(participant)));
+        deltaRating.set(participant,K*(ExpectedRank.get(participant) - ActualRank.get(participant) + 1));
       }
     }
     
@@ -254,8 +254,9 @@ class ratingSystem{
         const user = await User.findOne({ username: participant });
         console.log(user);
         if (user && deltaRating.has(participant)) {
-          if(user.rating === undefined) user.rating = 0;
-          user.rating.push(deltaRating.get(participant));
+          if(user.rating === undefined) user.rating = [];
+          const currentRating = (user.rating.length != 0) ? user.rating[user.rating.length-1] : 0;
+          user.rating.push(currentRating + deltaRating.get(participant));
           user.markModified("rating");
           await user.save();
         }
