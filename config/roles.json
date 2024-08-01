@@ -43,9 +43,8 @@
             "update_blog",
             "view_contest",
             "create_problem",
-            "update_problem",
-            "delete_problem",
-            "view_problem"
+            "view_problem",
+            "add_editorial"
         ]
       },
       {

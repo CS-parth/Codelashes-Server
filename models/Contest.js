@@ -12,6 +12,7 @@ const contestSchema = new mongoose.Schema({
     "startTime": String,
     "endDate": String,
     "duration": String,
+    "convertedDate": Date,
     "problems": [{
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Problem'

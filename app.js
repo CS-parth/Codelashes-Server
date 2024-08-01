@@ -67,7 +67,7 @@ stablishConnection();
   app.use('/api/result', resultRoutes);
   app.use('/api/blog',blogRoutes);
   // console.log(`Worker ${process.pid} started`);
-  console.log(new ratingSystem().calculateRatings("66aa8581808c710fef96ecf6"));
+  // console.log(new ratingSystem().calculateRatings("66aa8581808c710fef96ecf6"));
   server.listen(port, () => {
     process.stdout.write(`Server is up and running on ${port}\n`);
   });

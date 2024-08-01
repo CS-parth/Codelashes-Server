@@ -4,11 +4,11 @@ const Validation = new validation();
 
 exports.getContestMySubmissions = async (req, res) => {
     try {
-        const { username, contest } = req.params;
-        // console.log(username);
-        const mySubmissions = await Submission.find({ username: username, contest: contest })
+        const { contest } = req.params;
+        const token = req.cookies.jwt;
+        const user = await Validation.getUser(token);
+        const mySubmissions = await Submission.find({ username: user.username, contest: contest })
         .sort({ createdAt: -1 });
-
         res.status(200).json(mySubmissions);
     } catch (err) {
         console.error('Error fetching submissions:', err);  // Provide more specific logging

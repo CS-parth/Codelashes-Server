@@ -17,19 +17,22 @@ exports.createContest = async (req,res)=>{
         newContest.name = name;
         newContest.setters = setters.map((id)=>new mongoose.Types.ObjectId(id));
         const [hours,minutes] = startTime.split(':').map(Number);
+        console.log(startDate);
         newContest.startDate = moment(startDate).set({hours,minutes,seconds:0});
         newContest.startTime = startTime;
         newContest.duration = duration;
+        const contestStartDate = moment(newContest.startDate,"ddd MMM DD YYYY HH:mm:ss GMT+HHMM");
         const [durationHours, durationMinutes] = duration.split(':').map(Number);
-        newContest.endDate = moment(newContest.startDate,"ddd MMM DD YYYY HH:mm:ss Z+HHmm").add(durationHours, 'hours').add(durationMinutes, 'minutes');
+        newContest.endDate = contestStartDate.add(durationHours, 'hours').add(durationMinutes, 'minutes');
+        const contestEndDate = moment(newContest.endDate,"ddd MMM DD YYYY HH:mm:ss GMT+HHMM");
         newContest.description = description;
         newContest.rules = rules;
-        
+        newContest.convertedDate = contestStartDate.toDate();
         await newContest.save();
 
         // scheduling events for the contestStart and contestEnd
-        schedule.scheduleJob(moment(newContest.startDate,"ddd MMM DD YYYY HH:mm:ss Z+HHmm").toDate(), () => startContest(newContest._id));
-        schedule.scheduleJob(moment(newContest.endDate,"ddd MMM DD YYYY HH:mm:ss Z+HHmm").toDate(), () => endContest(newContest._id));
+        schedule.scheduleJob(contestStartDate.toDate(), () => startContest(newContest._id));
+        schedule.scheduleJob(contestEndDate.toDate(), () => endContest(newContest._id));
 
         res.status(200).json({
                             message: `Contest created successfully with id : ${newContest._id}`,
@@ -45,9 +48,9 @@ exports.editContest = async (req,res)=>{
         const {id} = req.params;
         let {name,setters,startDate,startTime,duration,description,rules} = req.body;
         const [hours,minutes] = startTime.split(':').map(Number);
-        startDate = moment(startDate).set({hours,minutes,seconds:0}).format("ddd MMM DD YYYY HH:mm:ss Z+HHmm");
+        startDate = moment(startDate).set({hours,minutes,seconds:0}).format("ddd MMM DD YYYY HH:mm:ss GMT+HHMM");
         const [durationHours, durationMinutes] = duration.split(':').map(Number);
-        endDate = moment(startDate,"ddd MMM DD YYYY HH:mm:ss Z+HHmm").add(durationHours, 'hours').add(durationMinutes, 'minutes');
+        endDate = moment(startDate,"ddd MMM DD YYYY HH:mm:ss GMT+HHMM").add(durationHours, 'hours').add(durationMinutes, 'minutes');
         const updatedContest = await Contest.findByIdAndUpdate(id,{
                 name,
                 setters,
@@ -103,7 +106,8 @@ exports.getContestList = async (req, res) => {
                                          .populate({
                                             path: 'setters',
                                             select:'username'
-                                         });
+                                         })
+                                         .sort({convertedDate: -1});
         
         if (!allContests) {
             return res.status(404).json({ message: "No Contests to pesent" });
@@ -156,7 +160,6 @@ exports.getManagable = async (req,res) => {
         }else if(user.role === process.env.COLEAD){
             return res.status(200).json(managableContests);
         }else{
-            console.log("first");
             managableContests = managableContests.filter((contest)=>contest.setters.includes(username));
             return res.status(200).json(managableContests);
         }
@@ -196,11 +199,12 @@ exports.getProfileContest = async (req,res) => {
                 '_id': 1, 
                 'startTime': '$result.startTime',
                 'startDate': '$result.startDate',
-                'name': '$result.name'
+                'name': '$result.name',
+                'convertedDate': '$result.convertedDate'
               }
             }, {
               '$sort': {
-                'startDate': -1
+                'convertedDate': -1
               }
             }
         ]);
@@ -215,12 +219,6 @@ exports.getProfileContest = async (req,res) => {
         res.status(500).json({message: "Internal Server Error"});
     }
 }
-// const io = require('socket.io')(server);
-
-// // Example contest data
-// const contests = [
-//   { contestId: '1', startTime: '2024-07-09T12:00:00Z', duration: 120 }, // Duration in minutes
-// ];
 
 function startContest(contestId) {
   emitMessage('contestStarted', { contestId });
@@ -232,17 +230,3 @@ function endContest(contestId) {
   console.log(`Contest ${contestId} ended`);
   RatingSystem.calculateRatings(contestId);
 }
-
-// function ratingCalculationComplete(contestId) {
-//   io.emit('ratingCalculationComplete', { contestId });
-//   console.log(`Rating calculation for contest ${contestId} completed`);
-// }
-
-// // Schedule the events
-// contests.forEach(contest => {
-//   const start = moment(contest.startTime);
-//   const end = start.clone().add(contest.duration, 'minutes');
-
-//   schedule.scheduleJob(start.toDate(), () => startContest(contest.contestId));
-//   schedule.scheduleJob(end.toDate(), () => endContest(contest.contestId));
-// });

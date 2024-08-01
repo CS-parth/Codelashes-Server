@@ -11,7 +11,7 @@ function isContestStarted(req, res) {
       }
 
       const [hours, minutes] = existingContest.startTime.split(':').map(Number);
-      const contestStartTime = moment(existingContest.startDate,"ddd MMM DD YYYY HH:mm:ss Z+HHmm").set({ hours, minutes, seconds: 0 });
+      const contestStartTime = moment(existingContest.startDate,"ddd MMM DD YYYY HH:mm:ss GMT+HHMM").set({ hours, minutes, seconds: 0 });
 
       if (moment().isBefore(moment(contestStartTime))) {
         return reject({ status: 403, message: "Contest not started yet" });

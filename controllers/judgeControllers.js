@@ -34,8 +34,8 @@ const executionWorker = new Worker('execution-queue', async (job) => {
   
   const contestId = contest;
   const existingContest = await Contest.findById(contestId);
-  const contestEndTime = moment(existingContest.endDate,"ddd MMM DD YYYY HH:mm:ss Z+HHmm");
-  const contestStartTime = moment(existingContest.startDate,"ddd MMM DD YYYY HH:mm:ss Z+HHmm");
+  const contestEndTime = moment(existingContest.endDate,"ddd MMM DD YYYY HH:mm:ss GMT+HHMM");
+  const contestStartTime = moment(existingContest.startDate,"ddd MMM DD YYYY HH:mm:ss GMT+HHMM");
   console.log(moment());
   console.log(contestEndTime);
   console.log(contestStartTime);

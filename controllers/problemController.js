@@ -5,7 +5,6 @@ const { getFileName } = require('../config/firebase');
 const AdmZip = require("adm-zip");
 const { promises: fs } = require('fs');
 const path = require('path');
-const util = require('util');
 const moment = require('moment');
 const Submission = require("../models/Submission");
 const Contest = require("../models/Contest");
@@ -13,7 +12,7 @@ const User = require("../models/User");
 const validation = require("../utils/Validation");
 const Editorial = require("../models/Editorial");
 const Validation = new validation();
-const ObjectId = require('mongodb').ObjectId;
+
 const extractZip = (filepath,outputpath) => {
     return new Promise((resolve,reject)=>{
         const zip = new AdmZip(filepath);
@@ -283,7 +282,7 @@ exports.getProblemList = async (req, res) => {
 
         const filteredProblems = allProblems.filter(problem => {
             if (!problem.contest) return true;
-            const contestEndTime = moment(problem.contest.endDate, "ddd MMM DD YYYY HH:mm:ss Z+HHmm");
+            const contestEndTime = moment(problem.contest.endDate, "ddd MMM DD YYYY HH:mm:ss GMT+HHMM");
             return moment().isAfter(contestEndTime);
         });
 
@@ -335,7 +334,6 @@ exports.getProblemList = async (req, res) => {
 exports.getManagable = async (req,res)=>{
     try{
         const {username,contestId} = req.query;
-        console.log(username,contestId);
         // get Question of this contest
         const contest = await Contest.findById(contestId)
                                      .populate({
@@ -379,11 +377,25 @@ exports.addEditorial = async (req,res) => {
 exports.getEditorial = async (req,res) => {
     try{
         const {id} = req.params;
-        const existingEditorial = await Editorial.findOne({problem:id});
+        const existingEditorial = await Editorial.findOne({problem:id})
+                                                 .populate({
+                                                    path:'problem',
+                                                    select:'contest',
+                                                    populate: {
+                                                        path: 'contest',
+                                                        select: 'endDate'
+                                                    }
+                                                 })
+        // the editorial should be server after the contest end time
         if(!existingEditorial){
            return res.status(404).json({message: "No Editorial Available"});
         }
-        res.status(200).send(existingEditorial);
+        const contestEndTime = moment(existingEditorial.problem.contest.endDate,"ddd MMM DD YYYY HH:mm:ss GMT+HHMM");
+        if(moment().isAfter(contestEndTime)){
+            res.status(200).send({editorial:existingEditorial,success:true});
+        }else{
+            res.status(200).send({editorial: null,success:false})
+        }
     }catch(err){
         console.error(err);
         res.status(500).json({message: "Internal Server Error"});
