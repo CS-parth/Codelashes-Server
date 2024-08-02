@@ -30,6 +30,8 @@ exports.Signin =  (req, res) => {
                   res.status(200).cookie('jwt', token, {
                     path: "/",
                     maxAge: 3 * 24 * 60 * 60 * 1000,
+                    secure: process.env.NODE_ENV === 'production',
+                    sameSite: 'none', 
                   }).json({
                     id: user._id,
                     success: true
@@ -82,7 +84,9 @@ exports.Signup = (req,res) => {
                   (err,token) => {
                       res.cookie('jwt', token, {
                         path: "/",
-                        maxAge: 3 * 24 * 60 * 60 * 1000
+                        maxAge: 3 * 24 * 60 * 60 * 1000,
+                        secure: process.env.NODE_ENV === 'production',
+                        sameSite: 'none',
                       });
                       
                       res.status(200).json({
