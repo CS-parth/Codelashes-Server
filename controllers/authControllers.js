@@ -106,7 +106,13 @@ exports.Signup = (req,res) => {
 } 
 
 exports.Logout = (req,res)=>{
-  res.clearCookie('jwt');
+  const cookieOptions = {
+    path: '/',
+    domain: process.env.NODE_ENV === 'production' ? 'codelashes-server.onrender.com' : 'localhost',
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'none',
+  };
+  res.clearCookie('jwt',cookieOptions);
   res.status(200).json({message: "Cookies removed"});
 }
 
