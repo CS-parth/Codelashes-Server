@@ -31,7 +31,8 @@ exports.Signin =  (req, res) => {
                     path: "/",
                     maxAge: 3 * 24 * 60 * 60 * 1000,
                     secure: process.env.NODE_ENV === 'production',
-                    sameSite: 'none', 
+                    sameSite: 'none',
+                    domain: 'codelashes-server.onrender.com' 
                   }).json({
                     id: user._id,
                     success: true
@@ -87,6 +88,7 @@ exports.Signup = (req,res) => {
                         maxAge: 3 * 24 * 60 * 60 * 1000,
                         secure: process.env.NODE_ENV === 'production',
                         sameSite: 'none',
+                        domain: 'codelashes-server.onrender.com'
                       });
                       
                       res.status(200).json({
@@ -109,5 +111,9 @@ exports.Logout = (req,res)=>{
 }
 
 exports.getUser = (req,res) => {
-  res.json({success:true,user: req.user});
+  if(req.user){
+    res.status(200).json({success:true,user: req.user});
+  }else{
+    res.status(200).json({success:false,user:null});
+  }
 }
