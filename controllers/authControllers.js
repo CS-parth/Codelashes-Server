@@ -110,7 +110,7 @@ exports.Logout = (req,res)=>{
     path: '/',
     domain: process.env.NODE_ENV === 'production' ? 'codelashes-server.onrender.com' : 'localhost',
     secure: process.env.NODE_ENV === 'production',
-    sameSite: 'none',
+    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'Lax',
   };
   res.clearCookie('jwt',cookieOptions);
   res.status(200).json({message: "Cookies removed"});
