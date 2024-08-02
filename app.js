@@ -44,7 +44,7 @@ stablishConnection();
   // Express Configuration
   const port = process.env.PORT || 7700;
   const corsOptions = {
-    origin: ['http://localhost:5173', 'http://localhost:5174'],
+    origin: ['http://localhost:5173', 'http://localhost:5174','https://codelashes-client.vercel.app'],
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],
     credentials: true,
