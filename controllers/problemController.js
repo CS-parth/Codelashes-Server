@@ -357,16 +357,12 @@ exports.addEditorial = async (req,res) => {
     try{
         const {id} = req.params;
         const {language,code,solution} = req.body;
-        console.log(solution);
-        console.log(id);
         const existingEditorial = await Editorial.findOne({problem:id});
-        console.log(existingEditorial);
         if(existingEditorial){
            return res.status(403).json({message: "Editorial to this problem already exists"});
         }
         const newEditorial = new Editorial({language,code,solution,problem:id});
         newEditorial.save();
-        console.log(newEditorial);
         res.status(200).send(newEditorial);
     }catch(err){
         console.error(err);

@@ -12,38 +12,40 @@ const isCoLead = require('../middlewares/isCoLead');
 const rbacMiddleware = new RBACMiddleware();
 const ethicalWallPolicy = new EthicalWallPolicy();
 const abacMiddleware = new ABACMiddleware();
-
-router.post("/create", upload.fields([
+const testing = require("../middlewares/test");
+router.post("/create",upload.fields([
             { name: 'testcase', maxCount: 1 },
             { name: 'answer', maxCount: 1 }
-          ]), problemController.createProblem);
+          ]),
+          Middleware.getAnd([rbacMiddleware.execute("create_problem"),PDP.execute]),
+          problemController.createProblem);
 
 router.get("/all",problemController.getProblemList);
 
-router.get("/managable",Middleware.getOR[
+router.get("/managable",Middleware.getOR([
                                     isLead,
                                     isProblemSetter,
                                     isCoLead
-                                  ],problemController.getManagable);
+                                  ]),problemController.getManagable);
 
 router.post("/edit/:id",upload.fields([
               { name: 'testcase', maxCount: 1 },
               { name: 'answer', maxCount: 1 }
             ]),
             Middleware.getOR([
-              Middleware.getAndPromise[rbacMiddleware("update_problem"),PDP.execute], // For passing lead and colead
-              Middleware.getAndPromise[ethicalWallPolicy.execute("update_problem"),PDP.execute] // For Passing the problem author
+              Middleware.getAndPromise([rbacMiddleware.execute("update_problem"),PDP.execute]), // For passing lead and colead
+              Middleware.getAndPromise([ethicalWallPolicy.execute("update_problem"),PDP.execute]) // For Passing the problem author
             ]),problemController.editProblem);
 
 router.post("/delete/:id",
                       Middleware.getOR([
-                        Middleware.getAndPromise[rbacMiddleware("delete_problem"),PDP.execute], // For passing lead and colead
-                        Middleware.getAndPromise[ethicalWallPolicy.execute("delete_problem"),PDP.execute] // For Passing the problem author
+                        Middleware.getAndPromise([rbacMiddleware.execute("delete_problem"),PDP.execute]), // For passing lead and colead
+                        Middleware.getAndPromise([ethicalWallPolicy.execute("delete_problem"),PDP.execute]) // For Passing the problem author
                       ]),problemController.deleteProblem);
 
 router.post("/editorial/:id",
                             Middleware.getAnd(
-                              [abacMiddleware("add_editorial","problem"),PDP.execute]
+                              [abacMiddleware.execute("add_editorial","problem"),PDP.execute]
                             ),problemController.addEditorial);
                         
 router.get("/editorial/:id",problemController.getEditorial); // Protecting a DB query

@@ -19,6 +19,7 @@ class RBACMiddleware extends Middleware {
     execute(permission) {
         return async (req, res, next) => {
             try{
+              console.log(req.cookies.jwt);
               const User = await Validation.getUser(req.cookies.jwt);
               req.user = User;
               if (!req.cookies || !req.cookies.jwt) {
@@ -33,6 +34,7 @@ class RBACMiddleware extends Middleware {
                   return Promise.reject({status: 403,message: "Access denied"});
               }
             }catch(err){
+              console.error(err);
               return Promise.reject({status: 500,message: "Internal Server Error"});
             }
         };
@@ -146,11 +148,13 @@ class RBACMiddleware extends Middleware {
           if(resourse == "submission" && permission == "create"){
              // req.contest and req.problem req.cookies.jwt
              const decodedToken = await Validation.getPayload(req.cookies.jwt);
-             const problemSetters = await Contest.findById(req.contest,'setters');
+             const contest = await Contest.findById(req.body.contest,'setters');
              // check if user if there or not in the problemSetters
-             if(problemSetters.includes(decodedToken.id)){
+             console.log(contest);
+             if(contest.setters.includes(decodedToken.id)){
               return Promise.reject({status: 403,message: "Access Denied"});
              }else{
+               console.log("resolved");
                return Promise.resolve();
              }
           }else if(resourse == "problem" && (permission == "delete" || permission == "update")){
@@ -159,7 +163,7 @@ class RBACMiddleware extends Middleware {
             const { id } = req.params;
             const decodedToken = await Validation.getPayload(token);
             const problemAuthor = await Problem.findById(id,'setter');
-            if(decodedToken.id === problemAuthor){
+            if(decodedToken.id == problemAuthor.setter){
               return Promise.resolve();
             }else{
               return Promise.reject({status: 403,message: "Access Denied"});

@@ -38,7 +38,6 @@ const removeFromFirebase = async (fileUrl) => {
       const bucketName = filePathWithoutBaseUrl.split('/o/')[0];
       const filePath = filePathWithoutBaseUrl.split(`${bucketName}/o/`)[1];
       await bucket.file(filePath).delete();
-      console.log(`File ${fileUrl} removed from Firebase Storage`);
     } catch (err) {
       console.error(`Error removing file ${fileUrl}:`, err);
     }
@@ -53,7 +52,6 @@ const fetchFileFromFirebase = async (fileUrl, destinationPath) => {
       const fileStream = file.createReadStream();
       const dest = fs.createWriteStream(destinationPath);
       fileStream.pipe(dest);
-      console.log(`File ${fileUrl} downloaded from Firebase Storage to ${destinationPath}`);
     } catch (err) {
       console.error(`Error downloading file ${fileUrl}:`, err);
     }
@@ -66,7 +64,6 @@ const genUniqueFileName = ()=>{
 }
 
 const getFileName = (fileUrl) => {
-  console.log(fileUrl);
   return fileUrl.split("/o/")[1].split("?")[0].split(".txt")[0];
 }
 module.exports = { uploadToFirebase, removeFromFirebase, fetchFileFromFirebase, genUniqueFileName , getFileName};

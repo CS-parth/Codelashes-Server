@@ -2,10 +2,10 @@ const ProblemSetter = require("../models/ProblemSetter");
 const validation = require("../utils/Validation");
 const Validation = new validation();
 const User = require("../models/User");
+
 exports.getSetters = async (req,res)=>{
     try{
         const allSetters = await ProblemSetter.find({},'username');
-        console.log(allSetters);
         if(!allSetters){
             return res.status(401).json({message: "No Setters Available"});
         }
@@ -30,12 +30,12 @@ exports.getRating = async (req,res) => {
 exports.getAuth = async (req,res)=>{
     try{
         const token = req.cookies.jwt;
-        if(token == null){
-            return res.status(204).json({authenticated: false,authorized: false});
-        }
         console.log(token);
+        if(token == null){
+            return res.status(200).json({authenticated: false,authorized: false});
+        }
         const role = await Validation.getRole(token);
-        console.log(role);
+
         if(role == process.env.LEAD || role == process.env.COLEAD || role == process.env.PROBLEM_SETTER){
             console.log("lead");
             return res.status(200).json({authenticated: true,authorized: true});

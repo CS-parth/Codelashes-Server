@@ -139,11 +139,9 @@ exports.getContestMeta = async (req,res) => {
 
 exports.getManagable = async (req,res) => {
     try{
-        const { username } = req.query;
-        console.log(username);
-        const user = await User.findOne({username:username});
-        // array objects 
-        // obj = {index,contestName,setters}
+        const token = req.cookies.jwt;
+        const user = await Validation.getUser(token);
+        const username  = user.username;
         const allContests = await Contest.find({})
                                          .populate('setters');
         let managableContests = allContests.map((contest,index)=>{
@@ -177,7 +175,8 @@ exports.getProfileContest = async (req,res) => {
         const contestsByOrder = await Submission.aggregate([
             {
               '$match': {
-                'username': `${username}`
+                'username': `${username}`,
+                'isRated': true
               }
             }, {
               '$group': {

@@ -24,7 +24,7 @@ const executionQueue = new Queue('execution-queue', { connection });
 
 const executionWorker = new Worker('execution-queue', async (job) => {
   const { username,contest,roomId, problem, code, jobId } = job.data;
-
+  
   // check if the problem exists 
   const existingProblem = await Problem.findById(problem);
   if(existingProblem == null){
@@ -36,9 +36,7 @@ const executionWorker = new Worker('execution-queue', async (job) => {
   const existingContest = await Contest.findById(contestId);
   const contestEndTime = moment(existingContest.endDate,"ddd MMM DD YYYY HH:mm:ss GMT+HHMM");
   const contestStartTime = moment(existingContest.startDate,"ddd MMM DD YYYY HH:mm:ss GMT+HHMM");
-  console.log(moment());
-  console.log(contestEndTime);
-  console.log(contestStartTime);
+
   if (moment().isBefore(contestEndTime) && moment().isAfter(contestStartTime)){
     newSubmission.isRated = true;
   } else {
@@ -53,10 +51,8 @@ const executionWorker = new Worker('execution-queue', async (job) => {
   try {
 
     await writeFilePromise(`sandbox/${fileName}.c`, code);
-    console.log(`Code written successfully to the file ${fileName}.c`);
 
     const writtenCode = fs.readFileSync(`sandbox/${fileName}.c`, 'utf-8');
-    console.log(`Written Code: ${writtenCode}`);
 
   
     compilationTimeStart = Date.now();
@@ -69,12 +65,9 @@ const executionWorker = new Worker('execution-queue', async (job) => {
     }
     compilationTimeEnd = Date.now();
     compilationTime = (compilationTimeEnd - compilationTimeStart) / 1000;
-    console.log("Compilation Time:", compilationTime);
-    console.log("Code compiled successfully");
 
    
     const binaryStats = fs.statSync(`sandbox/${fileName}`);
-    console.log(`Binary Size: ${binaryStats.size} bytes`);
 
     const Testcases = await Testcase.find({
       problem:`${problem}`
@@ -97,7 +90,6 @@ const executionWorker = new Worker('execution-queue', async (job) => {
           for(let charCode of textcaseAsBuffer){
             finalTestcase+=(String.fromCharCode(charCode));
           }
-          console.log(finalTestcase);
         }
         await unlinkPromise(outputFilePath).catch((err) => console.error("Cleanup error:", err));
         await unlinkPromise(`./sandbox/${jobId}_${testcase.data.access_token}.txt`).catch((err) => console.error("Cleanup error:", err));

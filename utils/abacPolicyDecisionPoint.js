@@ -38,7 +38,7 @@ class abacPolicyDecisionPoint {
             {
                 user:{
                     attributes: {
-                    role: this.rolesSet.problem_setter,
+                      role: this.rolesSet.problem_setter,
                     }
                 },
                 action: this.actionsSet.addEditorial,
@@ -48,7 +48,35 @@ class abacPolicyDecisionPoint {
                     //   isBanned: this.resourcesSet.banned
                     }
                 }
+            },
+            {
+              user:{
+                  attributes: {
+                    role: this.rolesSet.lead,
+                  }
+              },
+              action: this.actionsSet.addEditorial,
+              resourse : {
+                  type:this.resourcesSet.problem,
+                  attributes : {
+                  //   isBanned: this.resourcesSet.banned
+                  }
+              }
+          },
+          {
+            user:{
+                attributes: {
+                  role: this.rolesSet.co_lead,
+                }
+            },
+            action: this.actionsSet.addEditorial,
+            resourse : {
+                type:this.resourcesSet.problem,
+                attributes : {
+                //   isBanned: this.resourcesSet.banned
+                }
             }
+        },
         ];
     }
   

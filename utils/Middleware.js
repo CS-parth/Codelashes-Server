@@ -3,14 +3,14 @@ class Middleware{
     
     getOR(middlewareArr){
         return async (req,res,next)=>{ // async as we have to handle promises inside this func
-            let lstError = null;
+            let lstError = "Internal Server Error";
             let lstSatus = 500;
             for(let idx = 0;idx < middlewareArr.length;idx++){
                 try{
                     await middlewareArr[idx](req,res);
                     return next();
                 }catch(error){
-                    lstError = error.err;
+                    lstError = error.message;
                     lstSatus = error.status;
                 }
             }
