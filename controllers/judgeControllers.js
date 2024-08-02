@@ -14,12 +14,22 @@ const { fetchFileFromFirebase } = require("../config/firebase");
 const {emitMessage,sendMessage, getRooms} = require("../utils/socket-io");
 const Contest = require('../models/Contest');
 const moment = require('moment');
-const connection = {
-  host: '127.0.0.1',
-  port: '6379'
-};
+const Redis = require('ioredis');
+const redisUrl = process.env.REDIS_URL;
+const connection = new Redis(redisUrl, {
+  maxRetriesPerRequest: null,
+  enableReadyCheck: false,
+  retryStrategy(times) {
+    const delay = Math.min(times * 50, 2000);
+    return delay;
+  }
+});
 
-// Creating a queue
+connection.on('error', (error) => {
+  console.error('Redis connection error:', error);
+});
+
+
 const executionQueue = new Queue('execution-queue', { connection });
 
 const executionWorker = new Worker('execution-queue', async (job) => {
