@@ -10,6 +10,5 @@ router.post('/signup', authControllers.Signup);
 // Route for user login
 router.post('/signin',authControllers.Signin);
 router.post('/logout',authControllers.Logout);
-//passport.authenticate('jwt', { session: false })
 router.get('/user',passport.authenticate('jwt',{session: false}),authControllers.getUser);
 module.exports = router;
