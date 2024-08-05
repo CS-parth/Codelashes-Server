@@ -274,8 +274,14 @@ exports.getProblemList = async (req, res) => {
             .lean()
             .exec();
         
+        const filteredProblems = allProblems.filter(problem => {
+            if (!problem.contest) return true;
+            const contestEndTime = moment(problem.contest.endDate, "ddd MMM DD YYYY HH:mm:ss GMT+HHMM");
+            return moment().isAfter(contestEndTime);
+        });
+
         if(!token){
-            return res.status(200).json(allProblems);
+            return res.status(200).json(filteredProblems);
         }
         
         const user = await Validation.getUser(token);
@@ -286,11 +292,6 @@ exports.getProblemList = async (req, res) => {
             return res.status(404).json({ message: "No problems to present" });
         }
 
-        const filteredProblems = allProblems.filter(problem => {
-            if (!problem.contest) return true;
-            const contestEndTime = moment(problem.contest.endDate, "ddd MMM DD YYYY HH:mm:ss GMT+HHMM");
-            return moment().isAfter(contestEndTime);
-        });
 
         let problemsWithStatus = filteredProblems;
         if (username) {
