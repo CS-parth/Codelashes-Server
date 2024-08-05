@@ -265,9 +265,7 @@ exports.getProblem = async (req, res) => {
 exports.getProblemList = async (req, res) => {
     try {
         const token = req.cookies.jwt;
-        const user = await Validation.getUser(token);
-        const username = user?.username;
-
+        
         const allProblems = await Problem.find({}, '_id number title acceptance difficulty contest editorial')
             .populate({
                 path: 'contest',
@@ -275,6 +273,14 @@ exports.getProblemList = async (req, res) => {
             })
             .lean()
             .exec();
+        
+        if(!token){
+            return res.status(200).json(allProblems);
+        }
+        
+        const user = await Validation.getUser(token);
+        const username = user?.username;
+
 
         if (!allProblems.length) {
             return res.status(404).json({ message: "No problems to present" });
