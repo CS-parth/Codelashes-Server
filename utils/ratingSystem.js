@@ -14,7 +14,8 @@ class ratingSystem{
       const distinctUsernames = await Submission.aggregate([
         {
           '$match': {
-            'contest': new mongoose.Types.ObjectId(contestId)
+            'contest': new mongoose.Types.ObjectId(contestId),
+            'isRated': true
           }
         }, {
           '$group': {
