@@ -19,12 +19,11 @@ class RBACMiddleware extends Middleware {
     execute(permission) {
         return async (req, res, next) => {
             try{
-              console.log(req.cookies.jwt);
-              const User = await Validation.getUser(req.cookies.jwt);
-              req.user = User;
               if (!req.cookies || !req.cookies.jwt) {
                   return Promise.reject({status:403,message:"JWT token not found"});
               }
+              const User = await Validation.getUser(req.cookies.jwt);
+              req.user = User;
               const userRole = req.user ? req.user.role : 'anonymous';
               if (userRole !== 'anonymous') {
                   req.permission = permission;
@@ -56,11 +55,11 @@ class RBACMiddleware extends Middleware {
           }else{
             console.error("Bad request {check permission}");
           }
+          if (!req.cookies || !req.cookies.jwt) {
+            return Promise.reject({status: 403,message: "JWT token not found"});
+          }
           const User = await Validation.getUser(req.cookies.jwt);
           req.user = User;
-          if (!req.cookies || !req.cookies.jwt) {
-              return Promise.reject({status: 403,message: "JWT token not found"});
-          }
           const userRole = req.user ? req.user.role : 'anonymous';
           if (userRole !== 'anonymous') {
             req.resourse = resourse;
@@ -91,7 +90,7 @@ class RBACMiddleware extends Middleware {
             return Promise.reject({ status: 403, message: 'JWT token not found' });
           }
           
-         const User = await Validation.getUser(req.cookies.jwt);
+          const User = await Validation.getUser(req.cookies.jwt);
           req.user = User;
             
           const userRole = req.user ? req.user.role : 'anonymous';
