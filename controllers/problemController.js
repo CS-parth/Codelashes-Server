@@ -276,7 +276,7 @@ exports.getProblemList = async (req, res) => {
         
         const filteredProblems = allProblems.filter(problem => {
             if (!problem.contest) return true;
-            const contestEndTime = moment(problem.contest.endDate, "ddd MMM DD YYYY HH:mm:ss GMT+HHMM");
+            const contestEndTime = moment(problem.contest.endDate, "ddd MMM DD YYYY HH:mm:ss Z");
             return moment().isAfter(contestEndTime);
         });
 
@@ -393,7 +393,7 @@ exports.getEditorial = async (req,res) => {
         if(!existingEditorial){
            return res.status(404).json({message: "No Editorial Available"});
         }
-        const contestEndTime = moment(existingEditorial.problem.contest.endDate,"ddd MMM DD YYYY HH:mm:ss GMT+HHMM");
+        const contestEndTime = moment(existingEditorial.problem.contest.endDate,"ddd MMM DD YYYY HH:mm:ss Z");
         if(moment().isAfter(contestEndTime)){
             res.status(200).send({editorial:existingEditorial,success:true});
         }else{

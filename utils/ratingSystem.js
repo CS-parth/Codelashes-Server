@@ -138,7 +138,7 @@ class ratingSystem{
         
           if (submission.verdict === "Accepted") {
             isAccepted.set(problem,true);
-            const time = moment(submission.createdAt, "ddd MMM DD YYYY HH:mm:ss GMT+HHMM").diff(moment(contest.startDate, "ddd MMM DD YYYY HH:mm:ss GMT+HHMM"), 'seconds');
+            const time = moment(submission.createdAt, "ddd MMM DD YYYY HH:mm:ss Z").diff(moment(contest.startDate, "ddd MMM DD YYYY HH:mm:ss Z"), 'seconds');
             console.log(time);
             t += time;
             console.log(`Accepted Submission. Time added: ${time}. New Total Time for problem ${problem}: ${t}`);

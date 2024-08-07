@@ -17,22 +17,22 @@ exports.createContest = async (req,res)=>{
         newContest.name = name;
         newContest.setters = setters.map((id)=>new mongoose.Types.ObjectId(id));
         const [hours,minutes] = startTime.split(':').map(Number);
-        console.log(startDate);
         newContest.startDate = moment(startDate).set({hours,minutes,seconds:0});
         newContest.startTime = startTime;
         newContest.duration = duration;
-        const contestStartDate = moment(newContest.startDate,"ddd MMM DD YYYY HH:mm:ss GMT+HHMM");
+        const contestStartDate = moment(newContest.startDate,"ddd MMM DD YYYY HH:mm:ss Z");
         const [durationHours, durationMinutes] = duration.split(':').map(Number);
         newContest.endDate = contestStartDate.add(durationHours, 'hours').add(durationMinutes, 'minutes');
-        const contestEndDate = moment(newContest.endDate,"ddd MMM DD YYYY HH:mm:ss GMT+HHMM");
         newContest.description = description;
         newContest.rules = rules;
         newContest.convertedDate = contestStartDate.toDate();
         await newContest.save();
-
+        console.log(newContest.startDate);
+        const contestStartTime = moment(newContest.startDate,"ddd MMM DD YYYY HH:mm:ss Z");
+        const contestEndTime = moment(newContest.endDate,"ddd MMM DD YYYY HH:mm:ss Z");
         // scheduling events for the contestStart and contestEnd
-        schedule.scheduleJob(contestStartDate.toDate(), () => startContest(newContest._id));
-        schedule.scheduleJob(contestEndDate.toDate(), () => endContest(newContest._id));
+        schedule.scheduleJob(contestStartTime.toDate(), () => startContest(newContest._id));
+        schedule.scheduleJob(contestEndTime.toDate(), () => endContest(newContest._id));
 
         res.status(200).json({
                             message: `Contest created successfully with id : ${newContest._id}`,
@@ -48,9 +48,9 @@ exports.editContest = async (req,res)=>{
         const {id} = req.params;
         let {name,setters,startDate,startTime,duration,description,rules} = req.body;
         const [hours,minutes] = startTime.split(':').map(Number);
-        startDate = moment(startDate).set({hours,minutes,seconds:0}).format("ddd MMM DD YYYY HH:mm:ss GMT+HHMM");
+        startDate = moment(startDate).set({hours,minutes,seconds:0}).format("ddd MMM DD YYYY HH:mm:ss Z");
         const [durationHours, durationMinutes] = duration.split(':').map(Number);
-        endDate = moment(startDate,"ddd MMM DD YYYY HH:mm:ss GMT+HHMM").add(durationHours, 'hours').add(durationMinutes, 'minutes');
+        endDate = moment(startDate,"ddd MMM DD YYYY HH:mm:ss Z").add(durationHours, 'hours').add(durationMinutes, 'minutes');
         const updatedContest = await Contest.findByIdAndUpdate(id,{
                 name,
                 setters,

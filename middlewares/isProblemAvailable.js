@@ -15,7 +15,7 @@ async function isProblemAvailable(req, res) {
       if (!existingProblem) {
         return reject({ status: 404, message: "Problem not found" });
       }
-      const contestStartTime = moment(existingProblem.contest.startTime,"ddd MMM DD YYYY HH:mm:ss GMT+HHMM"); 
+      const contestStartTime = moment(existingProblem.contest.startTime,"ddd MMM DD YYYY HH:mm:ss Z"); 
       if (moment().isBefore()) {
         return reject({ status: 403, message: "Problem is not available yet"});
       }
