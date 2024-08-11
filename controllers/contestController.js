@@ -27,7 +27,7 @@ exports.createContest = async (req,res)=>{
         newContest.rules = rules;
         newContest.convertedDate = contestStartDate.toDate();
         await newContest.save();
-        console.log(newContest.startDate);
+        // console.log(newContest.startDate);
         const contestStartTime = moment(newContest.startDate,"ddd MMM DD YYYY HH:mm:ss Z");
         const contestEndTime = moment(newContest.endDate,"ddd MMM DD YYYY HH:mm:ss Z");
         // scheduling events for the contestStart and contestEnd
