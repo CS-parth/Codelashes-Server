@@ -11,9 +11,9 @@ const isProblemSetter = require("../middlewares/isProblemSetter");
 const middleware = require("../utils/Middleware");
 const Middleware = new middleware;
 const testing = require("../middlewares/test");
-const { getOR, getAnd, getAndPromise, single } = require('middleware-orchestrator');
+// const { getOR, getAnd, getAndPromise, single } = require('middleware-orchestrator');
 router.post("/create",
-            getAnd([rbacMiddleware.execute("create_contest"),PDP.execute]),
+            Middleware.getAnd([rbacMiddleware.execute("create_contest"),PDP.execute]),
             contestController.createContest);
 
 router.get("/all",contestController.getContestList);

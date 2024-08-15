@@ -6,10 +6,11 @@ const dotenv = require('dotenv');
 const numCPUs = require('os').cpus().length;
 const cluster = require('cluster');
 const mongoose = require("mongoose");
-
+const {exec} = require('child_process');
 const http = require('http');
 const cors = require('cors');
 const {Server} = require('socket.io');
+const schedule = require('node-schedule');
 // .env config
 dotenv.config();
 
@@ -28,7 +29,16 @@ const resultRoutes = require('./routes/resultRoutes');
 const stablishConnection = require("./db/connection");
 //Stablising the connection
 stablishConnection();
-
+// Keeping the Serve warm
+app.get("/warm",(req,res)=>{
+  res.send("I'm here to keep the server warm");
+})
+const job = schedule.scheduleJob('* */14 * * * *', function(){ // sending request in every 14 min
+  // Send a request 
+  if(process.env.NODE_ENV == 'production'){
+     exec('./scripts/warm.sh',(err,stdout,stderr)=>{})
+  }
+});
 // if (cluster.isPrimary) {
 
 //   console.log(`Primary ${process.pid} is running`);
