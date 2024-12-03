@@ -32,7 +32,7 @@ exports.Signin =  (req, res) => {
                     maxAge: 3 * 24 * 60 * 60 * 1000,
                     secure: process.env.NODE_ENV === 'production',
                     sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'Lax',
-                    domain: process.env.NODE_ENV === 'production' ? 'https://pencilroom-server-oj5s.onrender.com' : 'localhost'
+                    domain: process.env.NODE_ENV === 'production' ? 'https://codelashes-server-lcxc.onrender.com' : 'localhost'
                   }).json({
                     id: user._id,
                     success: true
@@ -88,7 +88,7 @@ exports.Signup = (req,res) => {
                         maxAge: 3 * 24 * 60 * 60 * 1000,
                         secure: process.env.NODE_ENV === 'production',
                         sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'Lax',
-                        domain: process.env.NODE_ENV === 'production' ? 'https://pencilroom-server-oj5s.onrender.com' : 'localhost'
+                        domain: process.env.NODE_ENV === 'production' ? 'https://codelashes-server-lcxc.onrender.com' : 'localhost'
                       });
                       
                       res.status(200).json({
@@ -108,7 +108,7 @@ exports.Signup = (req,res) => {
 exports.Logout = (req,res)=>{
   const cookieOptions = {
     path: '/',
-    domain: process.env.NODE_ENV === 'production' ? 'https://pencilroom-server-oj5s.onrender.com' : 'localhost',
+    domain: process.env.NODE_ENV === 'production' ? 'https://codelashes-server-lcxc.onrender.com' : 'localhost',
     secure: process.env.NODE_ENV === 'production',
     sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'Lax',
   };
