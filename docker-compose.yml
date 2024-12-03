@@ -6,7 +6,7 @@ services:
    ports:
      - 7700:7700
    deploy:
-     replicas: 15
+     replicas: 3
      restart_policy:
        max_attempts: 3
        condition: on-failure       
