@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
 
 
-const stablishConnection = ()=>{
+const stablishConnection = () => {
   mongoose.connect(process.env.MONGODB_URI, {
     useNewUrlParser: true,
     useUnifiedTopology: true
