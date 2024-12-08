@@ -27,8 +27,10 @@ const blogRoutes = require('./routes/blogRoutes');
 const resultRoutes = require('./routes/resultRoutes');
 // establishing the mongoose connection
 const stablishConnection = require("./db/connection");
+const { initializeRedisClient } = require("./db/redis");
 //Stablising the connection
 stablishConnection();
+initializeRedisClient();
 // Keeping the Serve warm
 app.get("/warm",(req,res)=>{
   res.send("I'm here to keep the server warm");
