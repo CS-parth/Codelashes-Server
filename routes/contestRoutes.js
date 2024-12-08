@@ -11,12 +11,14 @@ const isProblemSetter = require("../middlewares/isProblemSetter");
 const middleware = require("../utils/Middleware");
 const Middleware = new middleware;
 const testing = require("../middlewares/test");
+const redisCache = require("../middlewares/redisCache");
+
 // const { getOR, getAnd, getAndPromise, single } = require('middleware-orchestrator');
 router.post("/create",
             Middleware.getAnd([rbacMiddleware.execute("create_contest"),PDP.execute]),
             contestController.createContest);
 
-router.get("/all",contestController.getContestList);
+router.get("/all",redisCache(),contestController.getContestList);
 
 router.get("/meta/:id",contestController.getContestMeta); // For everyone
 
@@ -32,7 +34,7 @@ router.post("/edit/:id",Middleware.getOR([
                             isCoLead
                         ]),contestController.editContest);
 
-router.get("/my",contestController.getProfileContest); // for All
+router.get("/my",contestController.getProfileContest); // for mycontests
 
 router.get("/:id",
             Middleware.getOR([isLead,isProblemSetter,isCoLead,isContestStarted]),

@@ -16,19 +16,19 @@ const Contest = require('../models/Contest');
 const moment = require('moment');
 const Redis = require('ioredis');
 const redisUrl = process.env.REDIS_URL;
-const connection = process.env.NODE_ENV == "production" 
-? new Redis(redisUrl, {
+
+const redisURL = process.env.NODE_ENV === 'production' 
+  ? process.env.REDIS_URL 
+  : "redis://redis:6379";
+
+const connection = new Redis(redisURL, {
   maxRetriesPerRequest: null,
   enableReadyCheck: false,
   retryStrategy(times) {
     const delay = Math.min(times * 50, 2000);
     return delay;
   }
-})
-: {
-    host: '127.0.0.1',
-    port: '6379'
-  };
+});
 
 if(process.env.NODE_ENV == "production"){
   connection.on('error', (error) => {
