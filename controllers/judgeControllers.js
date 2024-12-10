@@ -19,7 +19,7 @@ const redisUrl = process.env.REDIS_URL;
 
 const redisURL = process.env.NODE_ENV === 'production' 
   ? process.env.REDIS_URL 
-  : "redis://redis:6379";
+  : `redis://${process.env.REDIS_HOST}:6379`;
 
 const connection = new Redis(redisURL, {
   maxRetriesPerRequest: null,
