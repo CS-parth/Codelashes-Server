@@ -32,7 +32,7 @@ exports.Signin =  (req, res) => {
                     maxAge: 3 * 24 * 60 * 60 * 1000,
                     secure: process.env.NODE_ENV === 'production',
                     sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'Lax',
-                    domain: process.env.NODE_ENV === 'production' ? 'https://codelashes-client.vercel.app' : 'localhost'
+                    domain: process.env.NODE_ENV === 'production' ? `${process.env.COOKIE_DOMAIN}` : 'localhost'
                   }).json({
                     id: user._id,
                     success: true
@@ -88,7 +88,7 @@ exports.Signup = (req,res) => {
                         maxAge: 3 * 24 * 60 * 60 * 1000,
                         secure: process.env.NODE_ENV === 'production',
                         sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'Lax',
-                        domain: process.env.NODE_ENV === 'production' ? 'https://codelashes-client.vercel.app' : 'localhost'
+                        domain: process.env.NODE_ENV === 'production' ? `${process.env.COOKIE_DOMAIN}` : 'localhost'
                       });
                       
                       res.status(200).json({
@@ -108,7 +108,7 @@ exports.Signup = (req,res) => {
 exports.Logout = (req,res)=>{
   const cookieOptions = {
     path: '/',
-    domain: process.env.NODE_ENV === 'production' ? 'https://codelashes-client.vercel.app' : 'localhost',
+    domain: process.env.NODE_ENV === 'production' ? `${process.env.COOKIE_DOMAIN}` : 'localhost',
     secure: process.env.NODE_ENV === 'production',
     sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'Lax',
   };
