@@ -3,7 +3,7 @@ const hash = require("object-hash");
 require("dotenv").config();
 
 exports.initializeRedisClient = async () => {
-    let redisURL = (process.env.NODE_ENV === 'production') ? process.env.REDIS_URL : "redis://redis:6379";
+    let redisURL = (process.env.NODE_ENV === 'production') ? process.env.REDIS_URL : `redis://${process.env.REDIS_HOST}:6379`;
 
     if (redisURL) {
       redisClient = createClient({ url: redisURL }).on("error", (e) => {
