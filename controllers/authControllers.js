@@ -106,18 +106,32 @@ exports.Signup = (req,res) => {
 } 
 
 exports.Logout = (req,res)=>{
-  const cookieOptions = {
-    path: '/',
-    domain: process.env.NODE_ENV === 'production' ? `${process.env.COOKIE_DOMAIN}` : 'localhost',
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'Lax',
-  };
-  res.clearCookie('jwt',cookieOptions);
-  res.status(200).json({message: "Cookies removed"});
+  try{
+    const cookieOptions = {
+      path: '/',
+      domain: process.env.NODE_ENV === 'production' ? `${process.env.COOKIE_DOMAIN}` : 'localhost',
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'Lax',
+    };
+    // CS~> For Oauth2
+    req.logout((err)=>{
+      if(err) throw new Error(err.message);
+      res.clearCookie('connect.sid',cookieOptions);
+      // CS~> For personal Auth
+      res.clearCookie('jwt',cookieOptions);
+      res.status(200).json({message: "Cookies removed"});
+    })
+  }catch(err){
+    console.error(err);
+    res.status(500).json({message: "Internal Server Errror"});
+  }
 }
 
 exports.getUser = (req,res) => {
+  console.log(req.session);
+  console.log(req.user);
   if(req.user){
+    // console.log(req.user);
     res.status(200).json({success:true,user: req.user});
   }else{
     res.status(200).json({success:false,user:null});
