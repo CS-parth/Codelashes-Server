@@ -7,9 +7,12 @@ class Middleware{
             let lstSatus = 500;
             for(let idx = 0;idx < middlewareArr.length;idx++){
                 try{
-                    await middlewareArr[idx](req,res);
+                    console.log("Executing : ", middlewareArr[idx]);
+                    await middlewareArr[idx](req,res,next);
+                    // console.log("Done");
                     return next();
                 }catch(error){
+                    console.log(error);
                     lstError = error.message;
                     lstSatus = error.status;
                 }

@@ -11,6 +11,8 @@ const http = require('http');
 const cors = require('cors');
 const {Server} = require('socket.io');
 const schedule = require('node-schedule');
+const session = require('express-session');
+const passport = require('passport');
 // .env config
 dotenv.config();
 
@@ -64,12 +66,28 @@ const job = schedule.scheduleJob('* */14 * * * *', function(){ // sending reques
   };
   
   app.use(cors(corsOptions));
-  
+
   // For preflight requests
   // app.options('*', cors(corsOptions));
   app.use(cookieParser());
-  app.use(express.urlencoded({ extended: false }));
+  app.use(express.urlencoded({ extended: true }));
   app.use(express.json());
+
+  // passport-middlewares
+  app.use(
+    session({
+        secret: 'SECRET_KEY',
+        resave: false,
+        saveUninitialized: false,
+        cookie: {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            maxAge: 7 * 24 * 60 * 60 * 1000 
+        }
+    })
+);
+  app.use(passport.initialize());
+  app.use(passport.session());
   
   const server = http.createServer(app);
   const { socketConnection, sendMessage, getRooms, emitMessage } = require('./utils/socket-io');
