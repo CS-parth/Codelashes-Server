@@ -137,3 +137,40 @@ exports.getUser = (req,res) => {
     res.status(200).json({success:false,user:null});
   }
 }
+
+exports.googleAuthCallback = async (req, res) => {
+  try {
+    if (!req.user) {
+      return res.redirect(`${process.env.CLIENT_URL}/login?error=no_user_data`);
+    }
+
+    const payload = {
+      id: req.user._id,
+    };
+
+    jwt.sign(
+      payload,
+      process.env.SECRET_KEY,
+      { expiresIn: 3600 * 24 * 30 },
+      (err, token) => {
+        if (err) {
+          console.error('JWT Sign Error:', err);
+          return res.redirect(`${process.env.CLIENT_URL}/login?error=token_generation_failed`);
+        }
+
+        res.cookie('jwt', token, {
+          path: "/",
+          maxAge: 3 * 24 * 60 * 60 * 1000,
+          secure: process.env.NODE_ENV === 'production',
+          sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'Lax',
+          domain: process.env.NODE_ENV === 'production' ? `${process.env.COOKIE_DOMAIN}` : 'localhost'
+        });
+
+        res.redirect(`${process.env.CLIENT_URL}`);
+      }
+    );
+  } catch (error) {
+    console.error('Google Auth Callback Error:', error);
+    res.redirect(`${process.env.CLIENT_URL}/login?error=callback_failed`);
+  }
+};
