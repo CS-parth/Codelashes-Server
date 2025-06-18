@@ -319,11 +319,14 @@ exports.getProblemList = async (req, res) => {
         const { status, difficulty, acceptance } = req.query;
         let filteredResults = problemsWithStatus;
 
+        console.log(status)
+        console.log(difficulty)
+        console.log(acceptance)
         if (status) {
-            filteredResults = filteredResults.filter(problem => problem.status === status);
+            filteredResults = filteredResults.filter(problem => problem.status == status);
         }
         if (difficulty) {
-            filteredResults = filteredResults.filter(problem => problem.difficulty === difficulty);
+            filteredResults = filteredResults.filter(problem => problem.difficulty == difficulty);
         }
         if (acceptance) {
             filteredResults = filteredResults.filter(problem => 
