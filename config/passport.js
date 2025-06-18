@@ -65,13 +65,13 @@ passport.use(new GoogleStrategy(
           const googleId = id;
           const username = profile.email.split('@')[0];
           if(role == process.env.LEAD){
-            newGoogleUser = new Lead({googleID: googleId,username,role});
+            newGoogleUser = new Lead({googleId: googleId,username,role});
           }else if(role == process.env.COLEAD){
-            newGoogleUser = new CoLead({googleID: googleId,username,role});
+            newGoogleUser = new CoLead({googleId: googleId,username,role});
           }else if(role == process.env.PROBLEM_SETTER){
-            newGoogleUser = new ProblemSetter({googleID: googleId,username,role});
+            newGoogleUser = new ProblemSetter({googleId: googleId,username,role});
           }else{
-            newGoogleUser = new Participant({googleID: googleId,username,role:"participant"});
+            newGoogleUser = new Participant({googleId: googleId,username,role:"participant"});
           }
           // save this user
           const savedUser = await newGoogleUser.save();

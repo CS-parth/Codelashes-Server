@@ -4,11 +4,11 @@ const mongoose = require('mongoose');
 const UserSchema = mongoose.Schema({
     username: String,
     email: String,
-    googleID: String,
+    googleId: String,
     password: {
         type: String,
         required: function(){
-            return this.googleID ? false : true
+            return this.googleId ? false : true
         }
     },
     rating: [{type:Number}],
